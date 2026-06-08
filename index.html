@@ -339,16 +339,10 @@
         /* ── Iframe Preview System ── */
         .preview-wrap {
             position: absolute; inset: 0;
-            pointer-events: none;
-            overflow: hidden;
-            z-index: 2;
-            display: block;
+            opacity: 0; pointer-events: none;
+            overflow: hidden; z-index: 2;
+            will-change: opacity, transform;
         }
-        .preview-gradient-overlay {
-            position: absolute; inset: 0; z-index: 3; pointer-events: none;
-            background: linear-gradient(to bottom, rgba(3,3,5,0) 0%, rgba(3,3,5,0) 50%, rgba(3,3,5,0.65) 82%, rgba(3,3,5,0.97) 100%);
-        }
-        .project-visual-bg { display: none !important; }
         .preview-wrap iframe {
             position: absolute; top: 0; left: 0;
             width: 250%; height: 250%;
@@ -371,6 +365,11 @@
         @keyframes shimmerLoop {
             0%, 100% { opacity: 0.3; transform: scaleX(0.4); }
             50% { opacity: 1; transform: scaleX(1); }
+        }
+        /* Bottom gradient overlay on preview */
+        .preview-gradient-overlay {
+            position: absolute; inset: 0; z-index: 3; pointer-events: none;
+            background: linear-gradient(to bottom, rgba(3,3,5,0) 0%, rgba(3,3,5,0) 50%, rgba(3,3,5,0.65) 82%, rgba(3,3,5,0.97) 100%);
         }
         /* Live badge */
         .preview-live-badge {
@@ -580,11 +579,10 @@
             .project-card.featured { grid-column: span 1; }
             .skills-grid { grid-template-columns: 1fr; }
             .about-grid { grid-template-columns: 1fr; gap: 32px; }
-            
-            /* Vorschauen auf Mobile erlauben, Live-Badge dauerhaft sichtbar machen */
-            .preview-wrap { display: block !important; }
-            .preview-live-badge { opacity: 1 !important; transform: translateY(0) scale(1) !important; }
-            .project-visit-hint { display: none !important; }
+            /* No hover previews on mobile nav menu open */
+            .preview-wrap { display: none; }
+            .preview-live-badge { display: none; }
+            .project-visit-hint { display: none; }
         }
 
         @media (max-width: 768px) {
@@ -801,22 +799,22 @@
     const PROJECTS = [
         {
             num: '01',
-            title: 'Brothers Barbershop',
-            subtitle: 'Client Project · Vienna',
-            url: 'https://moonlit-speculoos-26bb8a.netlify.app',
-            tags: ['UI/UX', 'Motion', 'HTML'],
-            desc: 'Cinematic Barbershop-Website mit Film-Reveal-Animationen, Ken Burns-Effekten und Luxury-Typografie.',
-            gradient: 'linear-gradient(160deg, #060406 0%, #3a1a0a 40%, #7a3a10 70%, #040204 100%)',
-            featured: true
-        },
-        {
-            num: '02',
             title: 'Orbital Experience',
             subtitle: 'Floriders Studio',
             url: 'https://moritzgallery.at',
             tags: ['WebGL', '3D', 'GSAP'],
             desc: 'Immersive 3D-Landingpage mit prozeduralem Saturn, Scroll-Kamerafahrt und butterweichen Animationen.',
             gradient: 'linear-gradient(135deg, #020205 0%, #5e5ce6 42%, #010103 100%)',
+            featured: true
+        },
+        {
+            num: '02',
+            title: 'Brothers Barbershop',
+            subtitle: 'Client Project · Vienna',
+            url: 'https://moonlit-speculoos-26bb8a.netlify.app',
+            tags: ['UI/UX', 'Motion', 'HTML'],
+            desc: 'Cinematic Barbershop-Website mit Film-Reveal-Animationen, Ken Burns-Effekten und Luxury-Typografie.',
+            gradient: 'linear-gradient(160deg, #060406 0%, #3a1a0a 40%, #7a3a10 70%, #040204 100%)',
             featured: false
         },
         {
@@ -850,23 +848,29 @@
                 .join('');
 
             article.innerHTML = `
-    <div class="project-visual">
-        <div class="preview-wrap" aria-hidden="true">
-            <div class="preview-shimmer">
-                <div class="shimmer-bar"></div>
-            </div>
-            <!-- data-src verzögert das Laden der schweren Webseiten bis nach dem Preloader -->
-            <iframe data-src="${project.url}" tabindex="-1" scrolling="no" loading="lazy"></iframe>
-        </div>
-        <span class="project-num">${project.num}</span>
-        <div class="preview-live-badge"><span class="live-dot"></span>Live Preview</div>
-        <span class="project-visit-hint">Besuchen ↗</span>
-    </div>
-    <div class="project-body">
-        <div class="project-tags">${tagsHTML}</div>
-        <h3>${project.title}</h3>
-        <p>${project.desc}</p>
-    </div>`;
+                <div class="project-visual" style="--card-gradient: ${project.gradient}">
+                    <div class="project-visual-bg"></div>
+                    <span class="project-num">${project.num}</span>
+
+                    <div class="preview-wrap" aria-hidden="true">
+                        <div class="preview-shimmer">
+                            <div class="shimmer-bar"></div>
+                        </div>
+                        <iframe tabindex="-1" scrolling="no" loading="lazy"></iframe>
+                        <div class="preview-gradient-overlay"></div>
+                    </div>
+
+                    <div class="preview-live-badge">
+                        <span class="live-dot"></span>
+                        Live Preview
+                    </div>
+                    <span class="project-visit-hint">Besuchen ↗</span>
+                </div>
+                <div class="project-body">
+                    <div class="project-tags">${tagsHTML}</div>
+                    <h3>${project.title}</h3>
+                    <p>${project.desc}</p>
+                </div>`;
 
             grid.appendChild(article);
         });
@@ -876,17 +880,51 @@
 
     /* ── Wire up hover previews and click navigation ── */
     function setupProjectCards() {
+        const isTouchDevice = window.matchMedia('(hover: none)').matches;
+
         document.querySelectorAll('.project-card[data-url]').forEach(card => {
-            const url    = card.dataset.url;
-            const iframe = card.querySelector('iframe');
-            const shimmer = card.querySelector('.preview-shimmer');
+            const url         = card.dataset.url;
+            const previewWrap = card.querySelector('.preview-wrap');
+            const iframe      = card.querySelector('iframe');
+            const shimmer     = card.querySelector('.preview-shimmer');
 
-            if (iframe && shimmer) {
-                iframe.addEventListener('load', () => shimmer.classList.add('loaded'), { once: true });
-            }
+            let iframeSrcSet  = false;
 
+            /* Click → open project URL in new tab */
             card.addEventListener('click', () => {
                 window.open(url, '_blank', 'noopener,noreferrer');
+            });
+
+            /* Hover previews only on pointer devices */
+            if (isTouchDevice || !previewWrap) return;
+
+            card.addEventListener('mouseenter', () => {
+                /* Lazy-load iframe on first hover to avoid upfront network cost */
+                if (!iframeSrcSet) {
+                    iframeSrcSet = true;
+                    iframe.src = url;
+
+                    iframe.addEventListener('load', () => {
+                        shimmer.classList.add('loaded');
+                    }, { once: true });
+
+                    /* Fallback: hide shimmer after 4 s in case iframe is blocked */
+                    setTimeout(() => shimmer.classList.add('loaded'), 4000);
+                }
+
+                gsap.killTweensOf(previewWrap);
+                gsap.fromTo(previewWrap,
+                    { opacity: 0, y: 10, scale: 1.015 },
+                    { opacity: 1, y: 0, scale: 1, duration: 0.52, ease: 'power3.out' }
+                );
+            });
+
+            card.addEventListener('mouseleave', () => {
+                gsap.killTweensOf(previewWrap);
+                gsap.to(previewWrap, {
+                    opacity: 0, y: 7,
+                    duration: 0.38, ease: 'power3.in'
+                });
             });
         });
     }
@@ -1093,7 +1131,7 @@
 
         function buildRingTexture() {
             const w = 2048, h = 4, c = document.createElement('canvas');
-            c.width = w; r = h;
+            c.width = w; c.height = h;
             const ctx = c.getContext('2d'); ctx.clearRect(0, 0, w, h);
             const zones = [
                 { x: 0,    len: 0.06, col: [90,  70, 40],  a: 0.08 },
@@ -1197,18 +1235,6 @@
 
         /* ── Reveal animations (called after loader exits) ── */
         function startAnimations() {
-            // Aktiviert die verzögerten Iframes erst nach dem Beenden des Preloaders
-            document.querySelectorAll('.project-card iframe[data-src]').forEach(iframe => {
-                iframe.setAttribute('src', iframe.getAttribute('data-src'));
-                iframe.removeAttribute('data-src');
-
-                const shimmer = iframe.parentElement.querySelector('.preview-shimmer');
-                if (shimmer) {
-                    // Sicherheits-Timeout, falls eine Seite fehlschlägt oder zu lange braucht
-                    setTimeout(() => shimmer.classList.add('loaded'), 4000);
-                }
-            });
-
             gsap.to('.ambient-glow',   { opacity: 0.35, duration: 3.2, ease: 'power2.out' });
             gsap.to('.ambient-glow-2', { opacity: 0.40, duration: 3.2, ease: 'power2.out' });
             gsap.to('.ambient-glow-3', { opacity: 0.30, duration: 3.2, ease: 'power2.out' });
