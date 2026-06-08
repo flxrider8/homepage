@@ -18,14 +18,15 @@
 
         :root {
             --bg: #030305;
-            --glass: rgba(16, 16, 20, 0.72);
-            --text: #ffffff; /* Helleres Weiß als Basis */
-            --muted: #aeb4c6; /* Helles, gut lesbares Grau statt dunkelgrau */
-            --accent: #5e5ce6; 
-            --accent-cyan: #00d2ff; 
-            --accent-glow: rgba(94, 92, 230, 0.12);
-            --ease: cubic-bezier(0.23, 1, 0.32, 1);
-            --section-x: clamp(24px, 6vw, 96px);
+            --glass: rgba(16,16,20,0.72);
+            --text: #ffffff;
+            --muted: #aeb4c6;
+            --accent: #5e5ce6;
+            --accent-cyan: #00d2ff;
+            --accent-glow: rgba(94,92,230,0.12);
+            --border: rgba(255,255,255,0.07);
+            --ease: cubic-bezier(0.23,1,0.32,1);
+            --section-x: clamp(24px,6vw,96px);
             --max: 1280px;
         }
 
@@ -662,67 +663,94 @@
             margin-top: 36px;
         }
         
+        /* ── Socials ── */
         .socials-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 16px;
-            margin-top: 80px;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-top: 64px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
             text-align: left;
         }
         .social-card {
-            padding: 24px;
-            border-radius: 18px;
+            position: relative;
+            padding: 18px 20px;
+            border-radius: 16px;
             border: 0.5px solid var(--border);
-            background: linear-gradient(145deg, rgba(20, 20, 26, 0.45), rgba(10, 10, 14, 0.3));
+            background: rgba(14,14,20,0.55);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             display: flex;
-            flex-direction: column;
-            gap: 16px;
-            transition: transform 0.4s var(--ease), border-color 0.4s, box-shadow 0.4s;
+            align-items: center;
+            gap: 14px;
+            overflow: hidden;
+            transition: transform 0.35s var(--ease), border-color 0.35s, box-shadow 0.35s;
             cursor: pointer;
         }
+        .social-card::before {
+            content: '';
+            position: absolute;
+            left: 0; top: 0; bottom: 0;
+            width: 2.5px;
+            background: var(--sc, var(--accent-cyan));
+            border-radius: 0 2px 2px 0;
+            opacity: 0;
+            transition: opacity 0.35s var(--ease);
+        }
+        .social-card:hover::before { opacity: 1; }
         .social-card:hover {
-            transform: translateY(-4px);
-            border-color: rgba(94, 92, 230, 0.35);
-            box-shadow: 0 12px 30px rgba(94, 92, 230, 0.1);
+            transform: translateY(-3px) translateX(2px);
+            border-color: color-mix(in srgb, var(--sc, var(--accent-cyan)) 35%, transparent);
+            box-shadow: 0 10px 28px rgba(0,0,0,0.4);
         }
         .social-icon-wrapper {
-            width: 44px;
-            height: 44px;
-            border-radius: 12px;
-            background: rgba(255, 255, 255, 0.03);
+            width: 40px; height: 40px;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.04);
             border: 0.5px solid var(--border);
             display: flex;
             align-items: center;
             justify-content: center;
-            color: var(--text);
-            transition: background 0.3s, color 0.3s;
+            color: var(--muted);
+            flex-shrink: 0;
+            transition: background 0.3s, color 0.3s, border-color 0.3s;
         }
         .social-card:hover .social-icon-wrapper {
-            background: linear-gradient(135deg, var(--accent-cyan), var(--accent));
-            color: #fff;
-            border-color: transparent;
+            background: color-mix(in srgb, var(--sc, var(--accent-cyan)) 18%, rgba(0,0,0,0.3));
+            color: var(--sc, var(--accent-cyan));
+            border-color: color-mix(in srgb, var(--sc, var(--accent-cyan)) 30%, transparent);
         }
+        .social-info { flex: 1; min-width: 0; }
         .social-info h4 {
-            font-size: 1rem;
+            font-size: 0.9rem;
             font-weight: 600;
-            margin-bottom: 4px;
+            margin-bottom: 2px;
             color: var(--text);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         .social-info p {
-            font-size: 0.8rem;
+            font-size: 0.74rem;
             color: var(--muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         .social-arrow {
-            margin-left: auto;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             color: var(--muted);
+            flex-shrink: 0;
             transition: transform 0.3s, color 0.3s;
         }
         .social-card:hover .social-arrow {
-            transform: translate(3px, -3px);
-            color: var(--accent-cyan);
+            transform: translate(3px,-3px);
+            color: var(--sc, var(--accent-cyan));
+        }
+        @media (max-width: 600px) {
+            .socials-grid { grid-template-columns: 1fr; max-width: 440px; margin-top: 48px; }
         }
 
         .site-footer {
@@ -780,7 +808,6 @@
             .project-card.featured { grid-column: span 1; }
             .skills-grid { grid-template-columns: 1fr; }
             .about-grid { grid-template-columns: 1fr; gap: 32px; }
-            .socials-grid { grid-template-columns: repeat(2, 1fr); }
         }
 
         @media (max-width: 768px) {
@@ -823,7 +850,6 @@
             .btn { padding: 12px 20px; font-size: 0.82rem; }
             .hero-meta { gap: 20px 28px; }
             .meta-item span:first-child { font-size: 1.05rem; }
-            .socials-grid { grid-template-columns: 1fr; }
             .scroll-hint {
                 font-size: 0.66rem;
                 bottom: 5vh;
@@ -1039,9 +1065,9 @@
                 </div>
                 
                <div class="socials-grid">
-                    <a href="https://instagram.com/flo.frx" target="_blank" rel="noopener" class="social-card">
+                    <a href="https://instagram.com/flo.frx" target="_blank" rel="noopener" class="social-card" style="--sc: #e1306c">
                         <div class="social-icon-wrapper">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
                         </div>
                         <div class="social-info">
                             <h4>Instagram</h4>
@@ -1050,9 +1076,9 @@
                         <span class="social-arrow">↗</span>
                     </a>
 
-                    <a href="mailto:florider8@hotmail.com" class="social-card">
+                    <a href="mailto:florider8@hotmail.com" class="social-card" style="--sc: #00d2ff">
                         <div class="social-icon-wrapper">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
                         </div>
                         <div class="social-info">
                             <h4>E-Mail</h4>
@@ -1061,9 +1087,9 @@
                         <span class="social-arrow">↗</span>
                     </a>
 
-                    <a href="https://snapchat.com/add/flo.frx" target="_blank" rel="noopener" class="social-card">
+                    <a href="https://snapchat.com/add/flo.frx" target="_blank" rel="noopener" class="social-card" style="--sc: #FFFC00">
                         <div class="social-icon-wrapper">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2c2.4 0 4.3 2.1 4.3 4.8 0 1-.4 2-.8 2.8 1.1 1.4 3 2.8 3 4.4 0 .9-.5 1.5-1.2 1.8-.7.3-1.6.2-2.1-.2-.5-.4-.7-.9-.7-1.4 0-.8.4-1.5.8-2-.8-.4-1.9-.7-3.3-.7s-2.5.3-3.3.7c.4.5.8 1.2.8 2 0 .5-.2 1-.7 1.4-.5.4-1.4.5-2.1.2-.7-.3-1.2-.9-1.2-1.8 0-1.6 1.9-3 3-4.4-.4-.8-.8-1.8-.8-2.8C7.7 4.1 9.6 2 12 2z"></path></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2c2.4 0 4.3 2.1 4.3 4.8 0 1-.4 2-.8 2.8 1.1 1.4 3 2.8 3 4.4 0 .9-.5 1.5-1.2 1.8-.7.3-1.6.2-2.1-.2-.5-.4-.7-.9-.7-1.4 0-.8.4-1.5.8-2-.8-.4-1.9-.7-3.3-.7s-2.5.3-3.3.7c.4.5.8 1.2.8 2 0 .5-.2 1-.7 1.4-.5.4-1.4.5-2.1.2-.7-.3-1.2-.9-1.2-1.8 0-1.6 1.9-3 3-4.4-.4-.8-.8-1.8-.8-2.8C7.7 4.1 9.6 2 12 2z"></path></svg>
                         </div>
                         <div class="social-info">
                             <h4>Snapchat</h4>
@@ -1072,13 +1098,13 @@
                         <span class="social-arrow">↗</span>
                     </a>
 
-                    <a href="https://wa.me/436600000000" target="_blank" rel="noopener" class="social-card">
+                    <a href="https://wa.me/436600000000" target="_blank" rel="noopener" class="social-card" style="--sc: #25d366">
                         <div class="social-icon-wrapper">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
                         </div>
                         <div class="social-info">
                             <h4>WhatsApp</h4>
-                            <p>Chat starten</p>
+                            <p>Nachricht schreiben</p>
                         </div>
                         <span class="social-arrow">↗</span>
                     </a>
@@ -1231,19 +1257,19 @@
             renderer.toneMapping = THREE.ACESFilmicToneMapping;
             renderer.toneMappingExposure = isMobile() ? 1.05 : 1.15;
 
-            const sunLight = new THREE.DirectionalLight(0xe0f7ff, 3.5);
+            const sunLight = new THREE.DirectionalLight(0xfff5e0, 3.8);
             sunLight.position.set(0, 3, -8);
             scene.add(sunLight);
 
-            const rimLight = new THREE.PointLight(0x5e5ce6, 4.0);
+            const rimLight = new THREE.PointLight(0x5e5ce6, 3.0);
             rimLight.position.set(0, 4, -6);
             scene.add(rimLight);
 
-            const frontFill = new THREE.DirectionalLight(0x00d2ff, 0.22);
+            const frontFill = new THREE.DirectionalLight(0xffe0a0, 0.18);
             frontFill.position.set(0, -1, 5);
             scene.add(frontFill);
 
-            scene.add(new THREE.AmbientLight(0x05060a, 0.3));
+            scene.add(new THREE.AmbientLight(0x100a04, 0.25));
 
             const glowCanvas = document.createElement('canvas');
             glowCanvas.width = 512; glowCanvas.height = 512;
@@ -1273,24 +1299,25 @@
                 const c = document.createElement('canvas');
                 c.width = w; c.height = h;
                 const ctx = c.getContext('2d');
-                ctx.fillStyle = '#b5bac9'; 
+                // Warm golden base — real Saturn is a honey/caramel tone
+                ctx.fillStyle = '#c8964a';
                 ctx.fillRect(0, 0, w, h);
                 const bands = [
-                    { yFrac: 0.00, hFrac: 0.04, col: '#8d92a0' },
-                    { yFrac: 0.04, hFrac: 0.06, col: '#cfd4e2' },
-                    { yFrac: 0.10, hFrac: 0.05, col: '#9ca1b0' },
-                    { yFrac: 0.15, hFrac: 0.08, col: '#d9dee6' },
-                    { yFrac: 0.23, hFrac: 0.04, col: '#878b99' },
-                    { yFrac: 0.27, hFrac: 0.10, col: '#cfd4e2' },
-                    { yFrac: 0.37, hFrac: 0.06, col: '#959aa8' },
-                    { yFrac: 0.43, hFrac: 0.14, col: '#e2e7f0' },
-                    { yFrac: 0.57, hFrac: 0.06, col: '#959aa8' },
-                    { yFrac: 0.63, hFrac: 0.10, col: '#cfd4e2' },
-                    { yFrac: 0.73, hFrac: 0.04, col: '#878b99' },
-                    { yFrac: 0.77, hFrac: 0.08, col: '#d9dee6' },
-                    { yFrac: 0.85, hFrac: 0.05, col: '#9ca1b0' },
-                    { yFrac: 0.90, hFrac: 0.06, col: '#cfd4e2' },
-                    { yFrac: 0.96, hFrac: 0.04, col: '#8d92a0' },
+                    { yFrac: 0.00, hFrac: 0.04, col: '#9a7030' },
+                    { yFrac: 0.04, hFrac: 0.06, col: '#ddb86a' },
+                    { yFrac: 0.10, hFrac: 0.05, col: '#b88840' },
+                    { yFrac: 0.15, hFrac: 0.08, col: '#e8cc88' },
+                    { yFrac: 0.23, hFrac: 0.04, col: '#a87838' },
+                    { yFrac: 0.27, hFrac: 0.10, col: '#ddb464' },
+                    { yFrac: 0.37, hFrac: 0.06, col: '#c09048' },
+                    { yFrac: 0.43, hFrac: 0.14, col: '#eed898' },
+                    { yFrac: 0.57, hFrac: 0.06, col: '#b88844' },
+                    { yFrac: 0.63, hFrac: 0.10, col: '#e0c07c' },
+                    { yFrac: 0.73, hFrac: 0.04, col: '#a87030' },
+                    { yFrac: 0.77, hFrac: 0.08, col: '#dab860' },
+                    { yFrac: 0.85, hFrac: 0.05, col: '#b08040' },
+                    { yFrac: 0.90, hFrac: 0.06, col: '#e0c880' },
+                    { yFrac: 0.96, hFrac: 0.04, col: '#9a6828' },
                 ];
                 bands.forEach(b => {
                     const y0 = b.yFrac * h, bh = b.hFrac * h;
@@ -1303,13 +1330,13 @@
                 });
                 for (let i = 0; i < 120; i++) {
                     const y = Math.random() * h;
-                    ctx.fillStyle = `rgba(255,255,255,${Math.random() * 0.04})`;
+                    ctx.fillStyle = `rgba(255,220,150,${Math.random() * 0.05})`;
                     ctx.fillRect(0, y, w, 1 + Math.random() * 2);
                 }
                 const poleCap = (yStart, yEnd) => {
                     const g = ctx.createLinearGradient(0, yStart, 0, yEnd);
-                    g.addColorStop(0, 'rgba(30,40,70,0.65)');
-                    g.addColorStop(1, 'rgba(30,40,70,0)');
+                    g.addColorStop(0, 'rgba(40,25,10,0.70)');
+                    g.addColorStop(1, 'rgba(40,25,10,0)');
                     ctx.fillStyle = g;
                     ctx.fillRect(0, yStart, w, yEnd - yStart);
                 };
@@ -1318,10 +1345,10 @@
                 const imgData = ctx.getImageData(0, 0, w, h);
                 const d = imgData.data;
                 for (let i = 0; i < d.length; i += 4) {
-                    const noise = (Math.random() - 0.5) * 8;
-                    d[i]   = Math.min(255, Math.max(0, d[i]   + noise * 0.5));
-                    d[i+1] = Math.min(255, Math.max(0, d[i+1] + noise * 0.8));
-                    d[i+2] = Math.min(255, Math.max(0, d[i+2] + noise));
+                    const noise = (Math.random() - 0.5) * 10;
+                    d[i]   = Math.min(255, Math.max(0, d[i]   + noise));
+                    d[i+1] = Math.min(255, Math.max(0, d[i+1] + noise * 0.7));
+                    d[i+2] = Math.min(255, Math.max(0, d[i+2] + noise * 0.2));
                 }
                 ctx.putImageData(imgData, 0, 0);
                 const tex = new THREE.CanvasTexture(c);
@@ -1345,17 +1372,18 @@
                 c.width = w; c.height = h;
                 const ctx = c.getContext('2d');
                 ctx.clearRect(0, 0, w, h);
+                // Real Saturn rings: icy beige/golden dust tones
                 const zones = [
-                    { x: 0,    len: 0.06, col: [50, 60, 100],  a: 0.10 },
-                    { x: 0.06, len: 0.10, col: [70, 80, 140],  a: 0.48 },
-                    { x: 0.16, len: 0.08, col: [85, 95, 160],  a: 0.62 },
-                    { x: 0.24, len: 0.18, col: [110,125, 210],  a: 0.88 },
-                    { x: 0.42, len: 0.04, col: [5,  10,  30],  a: 0.05 },
-                    { x: 0.46, len: 0.22, col: [95,110, 190],  a: 0.74 },
-                    { x: 0.68, len: 0.03, col: [40,  50, 90],  a: 0.24 },
-                    { x: 0.71, len: 0.10, col: [80, 95, 170],  a: 0.54 },
-                    { x: 0.81, len: 0.10, col: [55, 65, 110],  a: 0.22 },
-                    { x: 0.91, len: 0.09, col: [35,  40, 70],  a: 0.06 },
+                    { x: 0,    len: 0.06, col: [90,  70, 40],   a: 0.08 },
+                    { x: 0.06, len: 0.10, col: [160, 130, 80],   a: 0.45 },
+                    { x: 0.16, len: 0.08, col: [190, 160, 100],  a: 0.60 },
+                    { x: 0.24, len: 0.18, col: [220, 195, 140],  a: 0.85 },
+                    { x: 0.42, len: 0.04, col: [10,   8,   5],   a: 0.05 },
+                    { x: 0.46, len: 0.22, col: [200, 175, 120],  a: 0.72 },
+                    { x: 0.68, len: 0.03, col: [100,  80,  50],  a: 0.22 },
+                    { x: 0.71, len: 0.10, col: [175, 150, 100],  a: 0.52 },
+                    { x: 0.81, len: 0.10, col: [120,  95,  60],  a: 0.20 },
+                    { x: 0.91, len: 0.09, col: [70,   55,  30],  a: 0.05 },
                 ];
                 zones.forEach(z => {
                     const x0 = z.x * w, len = z.len * w;
@@ -1370,7 +1398,7 @@
                 });
                 for (let i = 0; i < 400; i++) {
                     const x = Math.random() * w;
-                    ctx.fillStyle = `rgba(120,180,255,${Math.random() * 0.15})`;
+                    ctx.fillStyle = `rgba(255,240,200,${Math.random() * 0.12})`;
                     ctx.fillRect(x, 0, 1, h);
                 }
                 const tex = new THREE.CanvasTexture(c);
@@ -1419,14 +1447,24 @@
                 );
                 saturnGroup.add(planet);
 
-                saturnGroup.add(new THREE.Mesh(
-                    new THREE.SphereGeometry(1.84, hq ? 128 : 32, hq ? 128 : 32),
-                    new THREE.MeshBasicMaterial({ color: 0x5e5ce6, transparent: true, opacity: 0.22, side: THREE.BackSide })
-                ));
-                saturnGroup.add(new THREE.Mesh(
-                    new THREE.SphereGeometry(2.08, hq ? 128 : 32, hq ? 128 : 32),
-                    new THREE.MeshBasicMaterial({ color: 0x00d2ff, transparent: true, opacity: 0.08, side: THREE.BackSide })
-                ));
+                // Atmospheric glow — sprite avoids the ugly visible sphere at ring gap
+                const atmC = document.createElement('canvas');
+                atmC.width = 256; atmC.height = 256;
+                const atmCtx = atmC.getContext('2d');
+                const atmGr = atmCtx.createRadialGradient(128, 128, 68, 128, 128, 128);
+                atmGr.addColorStop(0,    'rgba(0,0,0,0)');
+                atmGr.addColorStop(0.72, 'rgba(200,140,50,0.05)');
+                atmGr.addColorStop(0.85, 'rgba(180,120,40,0.08)');
+                atmGr.addColorStop(0.93, 'rgba(94,92,230,0.06)');
+                atmGr.addColorStop(1,    'rgba(0,0,0,0)');
+                atmCtx.fillStyle = atmGr;
+                atmCtx.fillRect(0, 0, 256, 256);
+                const atmSprite = new THREE.Sprite(new THREE.SpriteMaterial({
+                    map: new THREE.CanvasTexture(atmC),
+                    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending
+                }));
+                atmSprite.scale.set(4.0, 4.0, 1);
+                saturnGroup.add(atmSprite);
 
                 const innerR = 1.95, outerR = 4.0;
                 const ringGeo = new THREE.RingGeometry(innerR, outerR, hq ? 1024 : 256, hq ? 16 : 4);
