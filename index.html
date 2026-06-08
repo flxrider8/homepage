@@ -55,7 +55,7 @@
             pointer-events: none;
             z-index: 1;
             filter: blur(100px);
-            opacity: 0.35;
+            opacity: 0; /* Auf 0 gesetzt für fließendes Fade-In beim Laden */
             animation: ambientFloat 18s ease-in-out infinite;
             will-change: transform;
             contain: paint;
@@ -71,7 +71,7 @@
             pointer-events: none;
             z-index: 1;
             filter: blur(120px);
-            opacity: 0.4;
+            opacity: 0; /* Auf 0 gesetzt für fließendes Fade-In beim Laden */
             animation: ambientFloat 22s ease-in-out infinite reverse;
             will-change: transform;
             contain: paint;
@@ -87,7 +87,7 @@
             pointer-events: none;
             z-index: 1;
             filter: blur(90px);
-            opacity: 0.3;
+            opacity: 0; /* Auf 0 gesetzt für fließendes Fade-In beim Laden */
             animation: ambientFloat 15s ease-in-out infinite;
             animation-delay: -5s;
             will-change: transform;
@@ -171,6 +171,7 @@
             -webkit-backdrop-filter: blur(20px);
             background: rgba(0, 0, 0, 0.28);
             transition: background 0.4s var(--ease);
+            opacity: 0; /* Wird über JS kinematografisch eingeblendet */
         }
         nav.scrolled { background: rgba(0, 0, 0, 0.55); }
 
@@ -360,7 +361,6 @@
         }
         .line-inner {
             display: block;
-            /* Verlauf nach unten geschoben, damit die Schrift länger reines Weiß bleibt */
             background: linear-gradient(160deg, #ffffff 60%, #aeb4c6 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -371,7 +371,7 @@
 
         .lead {
             font-size: clamp(1rem, 1.5vw, 1.12rem);
-            color: rgba(255, 255, 255, 0.85); /* Helleres Weiß mit leichter Transparenz */
+            color: rgba(255, 255, 255, 0.85);
             line-height: 1.7;
             max-width: 520px;
             letter-spacing: 0;
@@ -1145,7 +1145,6 @@
             document.getElementById('logoLink').addEventListener('click', (e) => {
                 e.preventDefault();
                 lenis.scrollTo(0, { duration: 1.4 });
-                // Optional: Falls doch mal ein # im URL steht, diesen löschen
                 if (window.location.hash) {
                     history.replaceState(null, null, ' ');
                 }
@@ -1191,7 +1190,7 @@
                 });
             }
 
-            // ── Lade-Bildschirm (Progress Counter) ──
+            // ── Lade-Bildschirm (Progress Counter mit kinematografischem Overlap) ──
             let loadProgress = { val: 0 };
             gsap.to(loadProgress, {
                 val: 100,
@@ -1202,15 +1201,31 @@
                     document.getElementById('loaderBar').style.width = loadProgress.val + '%';
                 },
                 onComplete: () => {
-                    gsap.to('.loader', { 
-                        yPercent: -100, 
-                        duration: 1.2, 
-                        ease: 'power4.inOut', 
+                    const exitTl = gsap.timeline({
                         onComplete: () => {
                             document.querySelector('.loader').style.display = 'none';
-                            startAnimations();
                         }
                     });
+
+                    // Erster Schritt des Übergangs: Text und Ladebalken verblassen
+                    exitTl.to(['#loaderCounter', '.loader-bar-wrap'], {
+                        opacity: 0,
+                        y: -30,
+                        duration: 0.6,
+                        ease: 'power3.in'
+                    });
+
+                    // Zweiter Schritt: Loader-Hintergrund schiebt sich nach oben weg
+                    exitTl.to('.loader', { 
+                        yPercent: -100, 
+                        duration: 1.4, 
+                        ease: 'expo.inOut'
+                    }, "-=0.2");
+
+                    // Dritter Schritt: Start-Animationen der Hero-Sektion zünden kurz vor Ende des Wegschiebens
+                    exitTl.add(() => {
+                        startAnimations();
+                    }, "-=1.1");
                 }
             });
 
@@ -1232,16 +1247,27 @@
             const saturnGroup = new THREE.Group();
             saturnGroup.rotation.z = 0.47;
 
+            // Kamera-Zielpositionen für das Layout
+            let targetCamX = 0;
+            let targetCamY = 0.6;
+            let targetCamZ = 9.5;
+
             function applyCameraLayout(initial) {
                 if (isMobile()) {
-                    if (initial) camera.position.set(0, 0.3, 11);
+                    targetCamX = 0; targetCamY = 0.3; targetCamZ = 11;
                     saturnGroup.scale.setScalar(0.82);
                 } else if (isTablet()) {
-                    if (initial) camera.position.set(0, 0.5, 10);
+                    targetCamX = 0; targetCamY = 0.5; targetCamZ = 10;
                     saturnGroup.scale.setScalar(0.92);
                 } else {
-                    if (initial) camera.position.set(0, 0.6, 9.5);
+                    targetCamX = 0; targetCamY = 0.6; targetCamZ = 9.5;
                     saturnGroup.scale.setScalar(1);
+                }
+                
+                if (initial) {
+                    // Startposition weiter hinten und leicht versetzt für majestätischen Zoom beim First Load
+                    camera.position.set(targetCamX - 1.5, targetCamY + 2.0, targetCamZ + 12);
+                    camera.rotation.set(-0.15, 0.1, 0);
                 }
             }
             applyCameraLayout(true);
@@ -1299,7 +1325,6 @@
                 const c = document.createElement('canvas');
                 c.width = w; c.height = h;
                 const ctx = c.getContext('2d');
-                // Warm golden base — real Saturn is a honey/caramel tone
                 ctx.fillStyle = '#c8964a';
                 ctx.fillRect(0, 0, w, h);
                 const bands = [
@@ -1372,7 +1397,6 @@
                 c.width = w; c.height = h;
                 const ctx = c.getContext('2d');
                 ctx.clearRect(0, 0, w, h);
-                // Real Saturn rings: icy beige/golden dust tones
                 const zones = [
                     { x: 0,    len: 0.06, col: [90,  70, 40],   a: 0.08 },
                     { x: 0.06, len: 0.10, col: [160, 130, 80],   a: 0.45 },
@@ -1447,7 +1471,6 @@
                 );
                 saturnGroup.add(planet);
 
-                // Atmospheric glow — sprite avoids the ugly visible sphere at ring gap
                 const atmC = document.createElement('canvas');
                 atmC.width = 256; atmC.height = 256;
                 const atmCtx = atmC.getContext('2d');
@@ -1512,61 +1535,98 @@
             }
             animate3D();
 
+            // ── Kinematografischer First-Load Reveal ──
             function startAnimations() {
+                // Einblenden der Ambient Glows
+                gsap.to('.ambient-glow', { opacity: 0.35, duration: 3.2, ease: 'power2.out' });
+                gsap.to('.ambient-glow-2', { opacity: 0.4, duration: 3.2, ease: 'power2.out' });
+                gsap.to('.ambient-glow-3', { opacity: 0.3, duration: 3.2, ease: 'power2.out' });
+
+                // Kamera gleitet auf Endposition
+                gsap.to(camera.position, {
+                    x: targetCamX,
+                    y: targetCamY,
+                    z: targetCamZ,
+                    duration: 3.8,
+                    ease: 'expo.out'
+                });
+
+                // Kamera-Winkel gleitet sanft auf Normalwert
+                gsap.to(camera.rotation, {
+                    x: 0,
+                    y: 0,
+                    z: 0,
+                    duration: 3.8,
+                    ease: 'expo.out'
+                });
+
+                // Navigationsleiste kommt sanft von oben herab
+                gsap.fromTo('nav',
+                    { y: -100, opacity: 0 },
+                    { y: 0, opacity: 1, duration: 1.6, ease: 'expo.out' }
+                );
+
                 // Label-Entrance
                 gsap.fromTo('.hero .label', 
-                    { y: 30, opacity: 0, scale: 0.95 }, 
-                    { y: 0, opacity: 1, scale: 1, duration: 1, ease: 'power3.out' }
+                    { y: 35, opacity: 0, scale: 0.95 }, 
+                    { y: 0, opacity: 1, scale: 1, duration: 1.2, ease: 'power4.out', delay: 0.1 }
                 );
                 
                 // Cinematic 3D Reveal für die Hero Headline
                 gsap.fromTo('.hero .line-inner', 
-                    { y: 120, rotationX: -40, opacity: 0 }, 
-                    { y: 0, rotationX: 0, opacity: 1, duration: 1.4, stagger: 0.15, ease: 'power4.out', delay: 0.1 }
+                    { y: 130, rotationX: -35, opacity: 0 }, 
+                    { y: 0, rotationX: 0, opacity: 1, duration: 1.6, stagger: 0.18, ease: 'power4.out', delay: 0.2 }
                 );
 
                 // Cinematic Blur Reveal für den Fließtext
                 gsap.fromTo('.hero .lead', 
-                    { y: 40, opacity: 0, filter: 'blur(8px)' }, 
-                    { y: 0, opacity: 1, filter: 'blur(0px)', duration: 1.2, ease: 'power3.out', delay: 0.6 }
+                    { y: 45, opacity: 0, filter: 'blur(10px)' }, 
+                    { y: 0, opacity: 1, filter: 'blur(0px)', duration: 1.5, ease: 'power4.out', delay: 0.7 }
                 );
 
                 // Buttons Entrance
                 gsap.fromTo('.hero-actions .btn', 
-                    { y: 30, opacity: 0, scale: 0.9 }, 
-                    { y: 0, opacity: 1, scale: 1, duration: 0.9, stagger: 0.1, ease: 'back.out(1.7)', delay: 0.8 }
+                    { y: 35, opacity: 0, scale: 0.92 }, 
+                    { y: 0, opacity: 1, scale: 1, duration: 1.1, stagger: 0.12, ease: 'back.out(1.5)', delay: 0.9 }
                 );
 
+                // Meta Info Boxen
                 gsap.fromTo('.meta-item', 
-                    { y: 25, opacity: 0 }, 
-                    { y: 0, opacity: 1, duration: 0.8, stagger: 0.08, ease: 'power3.out', delay: 1.0 }
+                    { y: 30, opacity: 0 }, 
+                    { y: 0, opacity: 1, duration: 1.0, stagger: 0.1, ease: 'power3.out', delay: 1.1 }
                 );
 
+                // Scroll Hint
                 gsap.fromTo('.scroll-hint', 
-                    { opacity: 0, y: 30 }, 
-                    { opacity: isMobile() ? 0.8 : 0.7, y: 0, duration: 1.2, ease: 'power3.out', delay: 1.6 }
+                    { opacity: 0, y: 35 }, 
+                    { opacity: isMobile() ? 0.8 : 0.7, y: 0, duration: 1.4, ease: 'power3.out', delay: 1.7 }
                 );
 
+                // ScrollTrigger für den Hero-Outro
                 gsap.to('.hero', {
                     scrollTrigger: { trigger: '.hero', start: 'top top', end: '20% top', scrub: true },
                     opacity: 0
                 });
 
+                // Workcards Entrance
                 gsap.from('.project-card', {
                     scrollTrigger: { trigger: '#work', start: 'top 75%' },
                     y: 40, opacity: 0, duration: 0.8, stagger: 0.12, ease: 'power3.out'
                 });
 
+                // Skillcards Entrance
                 gsap.from('.skill-card', {
                     scrollTrigger: { trigger: '#skills', start: 'top 75%' },
                     y: 36, opacity: 0, duration: 0.7, stagger: 0.08, ease: 'power3.out'
                 });
 
+                // About-Section Entrance
                 gsap.from('#about h2, #about .lead, .about-list li', {
                     scrollTrigger: { trigger: '#about', start: 'top 78%' },
                     y: 30, opacity: 0, duration: 0.7, stagger: 0.08, ease: 'power3.out'
                 });
 
+                // Waterfall Reveal der Zitat-Sektion
                 const waterfallDiv = document.getElementById('waterfallReveal');
                 const words = waterfallDiv.innerText.split(' ');
                 waterfallDiv.innerHTML = '';
@@ -1581,16 +1641,19 @@
                     color: '#ffffff', stagger: 0.05, ease: 'none'
                 });
 
+                // Contact Entrance
                 gsap.from('.contact .label, .contact h2, .contact .lead, .contact-actions .btn', {
                     scrollTrigger: { trigger: '#contact', start: 'top 78%' },
                     y: 36, opacity: 0, duration: 0.8, stagger: 0.08, ease: 'power3.out'
                 });
 
+                // Socials Entrance
                 gsap.from('.social-card', {
                     scrollTrigger: { trigger: '#contact', start: 'top 30%' },
                     y: 30, opacity: 0, duration: 0.7, stagger: 0.08, ease: 'power3.out'
                 });
 
+                // Saturn Scroll-Kamerafahrt Setup
                 const scrubValue = isMobile() ? 0.8 : 1.3;
                 const tl = gsap.timeline({
                     scrollTrigger: {
