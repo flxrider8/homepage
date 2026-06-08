@@ -1101,17 +1101,15 @@
     <script>
         (function() {
             // Lenis Smooth Scroll Setup
-            const isMobileLenis = window.innerWidth < 768;
             const lenis = new Lenis({
-                duration: isMobileLenis ? 0.85 : 1.2,
+                duration: 1.2,
                 easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-                smoothWheel: true,
-                lerp: isMobileLenis ? 0.08 : 0.1
+                smoothWheel: true
             });
             gsap.registerPlugin(ScrollTrigger);
             lenis.on('scroll', ScrollTrigger.update);
             gsap.ticker.add((time) => lenis.raf(time * 1000));
-            gsap.ticker.lagSmoothing(isMobileLenis ? 0.5 : 1);
+            gsap.ticker.lagSmoothing(0);
 
             // Anchor scroll + close mobile nav
             const navLinks = document.getElementById('navLinks');
@@ -1512,7 +1510,7 @@
                 );
 
                 gsap.to('.hero', {
-                    scrollTrigger: { trigger: '.hero', start: 'top top', end: '20% top', scrub: isMobileLenis ? false : true },
+                    scrollTrigger: { trigger: '.hero', start: 'top top', end: '20% top', scrub: true },
                     opacity: 0
                 });
 
@@ -1541,7 +1539,7 @@
                     waterfallDiv.appendChild(span);
                 });
                 gsap.to(waterfallDiv.children, {
-                    scrollTrigger: { trigger: '.quote-section', start: 'top 55%', end: 'bottom 65%', scrub: isMobileLenis ? 0.2 : 0.6 },
+                    scrollTrigger: { trigger: '.quote-section', start: 'top 55%', end: 'bottom 65%', scrub: 0.6 },
                     color: '#ffffff', stagger: 0.05, ease: 'none'
                 });
 
