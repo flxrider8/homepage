@@ -56,6 +56,8 @@
             filter: blur(100px);
             opacity: 0.35;
             animation: ambientFloat 18s ease-in-out infinite;
+            will-change: transform;
+            contain: paint;
         }
 
         .ambient-glow-2 {
@@ -70,6 +72,8 @@
             filter: blur(120px);
             opacity: 0.4;
             animation: ambientFloat 22s ease-in-out infinite reverse;
+            will-change: transform;
+            contain: paint;
         }
 
         .ambient-glow-3 {
@@ -85,10 +89,12 @@
             opacity: 0.3;
             animation: ambientFloat 15s ease-in-out infinite;
             animation-delay: -5s;
+            will-change: transform;
+            contain: paint;
         }
 
         @keyframes ambientFloat {
-            0%, 100% { transform: translate(0, 0) scale(1); }
+            0%, 100% { transform: translate(0, 0) scale(1); will-change: transform; }
             33% { transform: translate(30px, -40px) scale(1.08); }
             66% { transform: translate(-20px, 30px) scale(0.95); }
         }
@@ -103,8 +109,8 @@
             transform: translate(-50%, -50%);
             z-index: 0;
             filter: blur(50px);
-            will-change: transform;
             transition: opacity 0.3s;
+            contain: layout paint;
         }
 
         /* ── Premium Loader ── */
@@ -430,28 +436,32 @@
         }
         .scroll-hint {
             position: absolute;
-            bottom: 5vh;
+            bottom: 8vh;
             left: var(--section-x);
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 8px;
-            font-size: 0.62rem;
+            gap: 12px;
+            font-size: 0.68rem;
             font-weight: 500;
-            letter-spacing: 0.16em;
+            letter-spacing: 0.12em;
             text-transform: uppercase;
             color: var(--muted);
-            opacity: 0.6;
+            opacity: 0.7;
+            will-change: opacity;
         }
         .scroll-line {
-            width: 1px;
-            height: 40px;
-            background: linear-gradient(to bottom, var(--accent), transparent);
-            animation: scrollPulse 2.2s ease-in-out infinite;
+            width: 2px;
+            height: 32px;
+            background: linear-gradient(to bottom, var(--accent-cyan), var(--accent), transparent);
+            animation: scrollPulse 2.4s cubic-bezier(0.42, 0, 0.58, 1) infinite;
+            border-radius: 1px;
         }
         @keyframes scrollPulse {
-            0%, 100% { transform: scaleY(0.35); opacity: 0.35; transform-origin: top; }
-            50% { transform: scaleY(1); opacity: 1; transform-origin: top; }
+            0%, 10% { transform: translateY(0) scaleY(0.4); opacity: 0.3; }
+            20%, 80% { opacity: 1; }
+            50% { transform: translateY(12px) scaleY(1); opacity: 1; }
+            90%, 100% { transform: translateY(0) scaleY(0.4); opacity: 0.3; }
         }
 
         /* ── Work ── */
@@ -787,11 +797,22 @@
             .lead { margin: 0 auto; text-align: center; max-width: 100%; }
             .work-header { flex-direction: column; align-items: center; text-align: center; }
             .work-header h2 { margin: 0 auto; }
-            .scroll-hint { left: 50%; transform: translateX(-50%); }
+            .scroll-hint { 
+                left: 50%; 
+                transform: translateX(-50%);
+                bottom: 6vh;
+                gap: 10px;
+                font-size: 0.72rem;
+                opacity: 0.8;
+            }
+            .scroll-line {
+                height: 28px;
+                width: 2px;
+            }
             .about-grid { text-align: center; }
             .about-list li { flex-direction: column; gap: 4px; align-items: center; }
             .about-list li strong { min-width: auto; }
-            .ambient-glow, .cursor-glow { display: none; }
+            .ambient-glow, .ambient-glow-2, .ambient-glow-3, .cursor-glow { display: none !important; pointer-events: none; }
             .contact h2 { font-size: clamp(2.4rem, 12vw, 4rem); }
             .quote-section { min-height: 60vh; padding-left: 24px; padding-right: 24px; }
         }
@@ -803,6 +824,14 @@
             .hero-meta { gap: 20px 28px; }
             .meta-item span:first-child { font-size: 1.05rem; }
             .socials-grid { grid-template-columns: 1fr; }
+            .scroll-hint {
+                font-size: 0.66rem;
+                bottom: 5vh;
+                gap: 8px;
+            }
+            .scroll-line {
+                height: 24px;
+            }
         }
 
         @media (min-width: 1600px) {
@@ -1072,15 +1101,17 @@
     <script>
         (function() {
             // Lenis Smooth Scroll Setup
+            const isMobileLenis = window.innerWidth < 768;
             const lenis = new Lenis({
-                duration: 1.2,
+                duration: isMobileLenis ? 0.85 : 1.2,
                 easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-                smoothWheel: true
+                smoothWheel: true,
+                lerp: isMobileLenis ? 0.08 : 0.1
             });
             gsap.registerPlugin(ScrollTrigger);
             lenis.on('scroll', ScrollTrigger.update);
             gsap.ticker.add((time) => lenis.raf(time * 1000));
-            gsap.ticker.lagSmoothing(0);
+            gsap.ticker.lagSmoothing(isMobileLenis ? 0.5 : 1);
 
             // Anchor scroll + close mobile nav
             const navLinks = document.getElementById('navLinks');
@@ -1120,11 +1151,19 @@
                 onUpdate: (self) => nav.classList.toggle('scrolled', self.scroll() > 80)
             });
 
-            // Cursor glow (desktop only)
+            // Cursor glow (desktop only) - throttled for performance
             const cursorGlow = document.getElementById('cursorGlow');
             if (window.matchMedia('(pointer: fine)').matches) {
+                let lastX = 0, lastY = 0, rafId = null;
                 document.addEventListener('mousemove', (e) => {
-                    gsap.to(cursorGlow, { x: e.clientX, y: e.clientY, duration: 1.2, ease: 'power3.out' });
+                    lastX = e.clientX;
+                    lastY = e.clientY;
+                    if (!rafId) {
+                        rafId = requestAnimationFrame(() => {
+                            cursorGlow.style.transform = `translate(${lastX}px, ${lastY}px) translate(-50%, -50%)`;
+                            rafId = null;
+                        });
+                    }
                 });
             }
 
@@ -1468,12 +1507,12 @@
                 );
 
                 gsap.fromTo('.scroll-hint', 
-                    { opacity: 0, y: 20 }, 
-                    { opacity: 0.6, y: 0, duration: 1, ease: 'power3.out', delay: 1.4 }
+                    { opacity: 0, y: 30 }, 
+                    { opacity: isMobile() ? 0.8 : 0.7, y: 0, duration: 1.2, ease: 'power3.out', delay: 1.6 }
                 );
 
                 gsap.to('.hero', {
-                    scrollTrigger: { trigger: '.hero', start: 'top top', end: '20% top', scrub: true },
+                    scrollTrigger: { trigger: '.hero', start: 'top top', end: '20% top', scrub: isMobileLenis ? false : true },
                     opacity: 0
                 });
 
@@ -1502,7 +1541,7 @@
                     waterfallDiv.appendChild(span);
                 });
                 gsap.to(waterfallDiv.children, {
-                    scrollTrigger: { trigger: '.quote-section', start: 'top 55%', end: 'bottom 65%', scrub: 0.6 },
+                    scrollTrigger: { trigger: '.quote-section', start: 'top 55%', end: 'bottom 65%', scrub: isMobileLenis ? 0.2 : 0.6 },
                     color: '#ffffff', stagger: 0.05, ease: 'none'
                 });
 
@@ -1532,12 +1571,16 @@
                   .to(camera.position, { z: 7.2, y: 0, x: 0, duration: 1.2 }, 3);
             }
 
+            let resizeTimeout;
             window.addEventListener('resize', () => {
-                camera.aspect = window.innerWidth / window.innerHeight;
-                camera.updateProjectionMatrix();
-                renderer.setPixelRatio(getDPR());
-                renderer.setSize(window.innerWidth, window.innerHeight);
-                applyCameraLayout(false);
+                clearTimeout(resizeTimeout);
+                resizeTimeout = setTimeout(() => {
+                    camera.aspect = window.innerWidth / window.innerHeight;
+                    camera.updateProjectionMatrix();
+                    renderer.setPixelRatio(getDPR());
+                    renderer.setSize(window.innerWidth, window.innerHeight);
+                    applyCameraLayout(false);
+                }, 250);
             });
 
             // Live Time Widget
