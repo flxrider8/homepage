@@ -480,8 +480,8 @@
         .social-card:hover::before { opacity: 1; }
         .social-card:hover {
             transform: translateY(-3px) translateX(2px);
-            border-color: color-mix(in srgb, var(--sc, var(--accent-cyan)) 35%, transparent);
-            box-shadow: 0 10px 28px rgba(0,0,0,0.4);
+            border-color: rgba(94,92,230,0.4);
+            box-shadow: 0 10px 28px rgba(0,0,0,0.45);
         }
         .social-icon-wrapper {
             width: 40px; height: 40px; border-radius: 10px;
@@ -490,9 +490,9 @@
             color: var(--muted); flex-shrink: 0; transition: background 0.3s, color 0.3s, border-color 0.3s;
         }
         .social-card:hover .social-icon-wrapper {
-            background: color-mix(in srgb, var(--sc, var(--accent-cyan)) 18%, rgba(0,0,0,0.3));
+            background: rgba(94,92,230,0.18);
             color: var(--sc, var(--accent-cyan));
-            border-color: color-mix(in srgb, var(--sc, var(--accent-cyan)) 30%, transparent);
+            border-color: rgba(94,92,230,0.3);
         }
         .social-info { flex: 1; min-width: 0; }
         .social-info h4 { font-size: 0.9rem; font-weight: 600; margin-bottom: 2px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -510,6 +510,7 @@
         .footer-time { font-size: 0.75rem; color: var(--muted); font-variant-numeric: tabular-nums; letter-spacing: 0.01em; }
 
         .nav-mobile-cta { display: none; }
+        .nav-contact-link { display: block; }
 
         /* ── Responsive ── */
         @media (max-width: 1200px) {
@@ -523,7 +524,7 @@
             .nav-links {
                 position: fixed; top: 0; left: 0; right: 0; bottom: 0;
                 width: 100vw; height: 100svh;
-                background: rgba(2,4,10,0.85); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
+                background: rgba(2,4,10,0.90); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
                 display: flex; flex-direction: column; justify-content: center; align-items: center;
                 gap: 24px; padding: 0; z-index: 99; opacity: 0; visibility: hidden; pointer-events: none;
                 background-image: linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
@@ -548,6 +549,7 @@
             .nav-toggle { display: block; }
             .nav-cta-desktop { display: none !important; }
             .nav-mobile-cta { display: block; margin-top: 32px; }
+            .nav-contact-link { display: none; }
 
             .btn-premium-roto {
                 position: relative; padding: 16px 42px; border-radius: 100px;
@@ -649,10 +651,11 @@
             <span></span><span></span><span></span>
         </button>
         <ul class="nav-links" id="navLinks">
+            <li><a href="#">Home</a></li>
             <li><a href="#work">Projects</a></li>
             <li><a href="#skills">Skills</a></li>
             <li><a href="#about">About</a></li>
-            <li><a href="#contact">Kontakt</a></li>
+            <li class="nav-contact-link"><a href="#contact">Kontakt</a></li>
             <li class="nav-mobile-cta">
                 <a href="#contact" class="btn-premium-roto"><span class="roto-text">Kontakt →</span></a>
             </li>
@@ -972,7 +975,13 @@
         document.querySelectorAll('a[href^="#"]').forEach(link => {
             link.addEventListener('click', (e) => {
                 const id = link.getAttribute('href');
-                if (id === '#') return;
+                if (id === '#') {
+                    e.preventDefault();
+                    if (navLinks.classList.contains('open')) toggleMobileMenu();
+                    lenis.scrollTo(0, { duration: 1.4 });
+                    if (window.location.hash) history.replaceState(null, null, ' ');
+                    return;
+                }
                 e.preventDefault();
                 if (navLinks.classList.contains('open')) toggleMobileMenu();
                 const target = document.querySelector(id);
