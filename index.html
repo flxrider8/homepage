@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -305,105 +306,154 @@
         }
         .project-card.featured { grid-column: span 2; }
 
-        /* ── Project Visual ── */
+        /* ── Project Visual (Browser-Mockup mit Live-Screenshot) ── */
         .project-visual {
             aspect-ratio: 16/10; position: relative; overflow: hidden;
+            background: #0a0a0e;
         }
         .project-card.featured .project-visual { aspect-ratio: 16/9; }
 
-        /* Gradient background layer (replaces ::before for easier DOM access) */
-        .project-visual-bg {
-            position: absolute; inset: 0;
-            background: var(--card-gradient, linear-gradient(135deg, #020205 0%, #5e5ce6 42%, #010103 100%));
-            opacity: 0.9; transition: opacity 0.5s, transform 0.6s var(--ease);
-            will-change: transform; z-index: 0;
+        /* macOS-Browser-Chrome auf Karten */
+        .browser-chrome {
+            position: absolute; top: 0; left: 0; right: 0;
+            height: 30px; z-index: 20;
+            display: flex; align-items: center; gap: 10px;
+            padding: 0 12px;
+            background: linear-gradient(to bottom, rgba(22,22,28,0.96), rgba(16,16,22,0.92));
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border-bottom: 0.5px solid rgba(255,255,255,0.06);
         }
-        .project-card:hover .project-visual-bg { opacity: 1; transform: scale(1.04); }
+        .browser-dots { display: flex; gap: 6px; flex-shrink: 0; }
+        .browser-dot { width: 10px; height: 10px; border-radius: 50%; }
+        .browser-dot:nth-child(1) { background: #ff5f57; }
+        .browser-dot:nth-child(2) { background: #febc2e; }
+        .browser-dot:nth-child(3) { background: #28c840; }
+        .browser-url-bar {
+            flex: 1; height: 18px;
+            background: rgba(255,255,255,0.06);
+            border-radius: 5px;
+            display: flex; align-items: center; gap: 6px;
+            padding: 0 9px;
+            font-size: 0.62rem; color: rgba(255,255,255,0.55);
+            font-family: ui-monospace, "SF Mono", Menlo, monospace;
+            overflow: hidden; white-space: nowrap;
+            border: 0.5px solid rgba(255,255,255,0.04);
+            max-width: 78%;
+        }
+        .browser-url-bar svg { flex-shrink: 0; opacity: 0.7; }
+        .browser-url-text { overflow: hidden; text-overflow: ellipsis; }
 
-        /* Gloss sheen */
-        .project-visual::after {
+        /* Live-Screenshot (immer sichtbar als Hintergrund) */
+        .preview-screenshot {
+            position: absolute; top: 30px; left: 0; right: 0; bottom: 0;
+            background-color: #0a0a0e;
+            background-size: cover; background-position: top center;
+            background-repeat: no-repeat;
+            z-index: 1;
+            opacity: 0;
+            transition: opacity 0.6s ease, transform 0.7s var(--ease), filter 0.5s ease;
+        }
+        .preview-screenshot.loaded { opacity: 1; }
+        .project-card:hover .preview-screenshot { transform: scale(1.03); filter: brightness(0.92); }
+
+        /* Skeleton während Screenshot lädt */
+        .preview-skeleton {
+            position: absolute; top: 30px; left: 0; right: 0; bottom: 0;
+            z-index: 0; overflow: hidden;
+            background:
+                radial-gradient(circle at 30% 35%, rgba(94,92,230,0.18) 0%, transparent 55%),
+                linear-gradient(135deg, #0d0d14 0%, #14141c 50%, #0a0a0e 100%);
+        }
+        .preview-skeleton::after {
             content: ''; position: absolute; inset: 0;
-            background: radial-gradient(circle at 30% 40%, rgba(255,255,255,0.12) 0%, transparent 55%);
-            opacity: 0; transition: opacity 0.5s; z-index: 5; pointer-events: none;
+            background: linear-gradient(110deg, transparent 30%, rgba(255,255,255,0.04) 50%, transparent 70%);
+            animation: skeletonSweep 2.2s ease-in-out infinite;
         }
-        .project-card:hover .project-visual::after { opacity: 1; }
+        @keyframes skeletonSweep {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
 
+        /* Nummer-Badge */
         .project-num {
-            position: absolute; top: 16px; left: 16px; z-index: 6;
-            font-size: 0.65rem; font-weight: 600; letter-spacing: 0.1em;
-            color: rgba(255,255,255,0.5);
+            position: absolute; top: 42px; left: 14px; z-index: 6;
+            font-size: 0.6rem; font-weight: 600; letter-spacing: 0.1em;
+            color: rgba(255,255,255,0.85);
+            padding: 4px 9px; border-radius: 980px;
+            background: rgba(0,0,0,0.55); backdrop-filter: blur(12px);
+            border: 0.5px solid rgba(255,255,255,0.08);
             transition: opacity 0.3s;
         }
-        .project-card:hover .project-num { opacity: 0; }
 
-        /* ── Iframe Preview System ── */
+        /* Iframe-Overlay (echte Live-Website) — fadet beim Hover ein */
         .preview-wrap {
-            position: absolute; inset: 0;
+            position: absolute; top: 30px; left: 0; right: 0; bottom: 0;
             opacity: 0; pointer-events: none;
-            overflow: hidden; z-index: 2;
-            will-change: opacity, transform;
+            overflow: hidden; z-index: 3;
+            will-change: opacity;
+            transition: opacity 0.55s ease;
         }
         .preview-wrap iframe {
             position: absolute; top: 0; left: 0;
             width: 250%; height: 250%;
             transform: scale(0.4); transform-origin: top left;
-            border: none; pointer-events: none; background: #030305; display: block;
+            border: none; pointer-events: none; background: transparent; display: block;
         }
-        /* Shimmer loading state */
-        .preview-shimmer {
-            position: absolute; inset: 0;
-            background: linear-gradient(135deg, rgba(18,18,26,0.96) 0%, rgba(12,12,20,0.98) 100%);
-            z-index: 4; display: flex; align-items: center; justify-content: center;
-            transition: opacity 0.5s ease; pointer-events: none;
-        }
-        .preview-shimmer.loaded { opacity: 0; }
-        .shimmer-bar {
-            width: 44px; height: 2px; border-radius: 2px;
-            background: linear-gradient(90deg, transparent, var(--accent-cyan), var(--accent), transparent);
-            animation: shimmerLoop 1.4s ease-in-out infinite;
-        }
-        @keyframes shimmerLoop {
-            0%, 100% { opacity: 0.3; transform: scaleX(0.4); }
-            50% { opacity: 1; transform: scaleX(1); }
-        }
-        /* Bottom gradient overlay on preview */
+
+        /* Bottom-Fade nur beim Hover für Lesbarkeit */
         .preview-gradient-overlay {
-            position: absolute; inset: 0; z-index: 3; pointer-events: none;
-            background: linear-gradient(to bottom, rgba(3,3,5,0) 0%, rgba(3,3,5,0) 50%, rgba(3,3,5,0.65) 82%, rgba(3,3,5,0.97) 100%);
+            position: absolute; top: 30px; left: 0; right: 0; bottom: 0;
+            z-index: 4; pointer-events: none; opacity: 0;
+            transition: opacity 0.5s;
+            background: linear-gradient(to bottom, rgba(3,3,5,0) 60%, rgba(3,3,5,0.55) 100%);
         }
-        /* Live badge */
+        .project-card:hover .preview-gradient-overlay { opacity: 1; }
+
+        /* LIVE WEBSITE Badge — immer sichtbar */
         .preview-live-badge {
-            position: absolute; top: 14px; right: 14px; z-index: 10;
+            position: absolute; top: 42px; right: 14px; z-index: 10;
             display: flex; align-items: center; gap: 6px;
-            font-size: 0.6rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
-            color: rgba(255,255,255,0.9); padding: 5px 11px; border-radius: 980px;
-            border: 0.5px solid rgba(255,255,255,0.14);
-            background: rgba(0,0,0,0.6); backdrop-filter: blur(14px);
-            opacity: 0; transform: translateY(-5px) scale(0.94);
-            transition: opacity 0.4s var(--ease), transform 0.4s var(--ease);
+            font-size: 0.58rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+            color: rgba(255,255,255,0.95); padding: 5px 11px; border-radius: 980px;
+            border: 0.5px solid rgba(255,255,255,0.12);
+            background: rgba(0,0,0,0.55); backdrop-filter: blur(14px);
+            opacity: 1;
+            transition: background 0.3s, border-color 0.3s;
             pointer-events: none;
         }
-        .project-card:hover .preview-live-badge { opacity: 1; transform: translateY(0) scale(1); }
+        .project-card:hover .preview-live-badge {
+            background: rgba(34,197,94,0.18);
+            border-color: rgba(34,197,94,0.45);
+        }
         .live-dot {
             width: 5px; height: 5px; border-radius: 50%; background: #22c55e;
-            box-shadow: 0 0 7px #22c55e;
+            box-shadow: 0 0 8px #22c55e;
             animation: livePulse 1.6s ease-in-out infinite;
         }
         @keyframes livePulse {
             0%, 100% { opacity: 1; transform: scale(1); }
             50% { opacity: 0.45; transform: scale(0.65); }
         }
-        /* Visit hint bottom-right */
+
+        /* "Besuchen" Pill — immer sichtbar, leuchtet beim Hover */
         .project-visit-hint {
             position: absolute; bottom: 14px; right: 16px; z-index: 10;
-            font-size: 0.7rem; font-weight: 600; letter-spacing: 0.03em;
-            color: var(--accent-cyan);
-            opacity: 0; transform: translate(6px, 6px);
-            transition: opacity 0.35s var(--ease), transform 0.35s var(--ease);
+            display: inline-flex; align-items: center; gap: 4px;
+            font-size: 0.68rem; font-weight: 600; letter-spacing: 0.02em;
+            color: rgba(255,255,255,0.82);
+            padding: 5px 10px; border-radius: 980px;
+            background: rgba(0,0,0,0.5); backdrop-filter: blur(12px);
+            border: 0.5px solid rgba(255,255,255,0.1);
+            opacity: 0.92;
+            transition: all 0.4s var(--ease);
             pointer-events: none;
-            text-shadow: 0 0 12px rgba(0,210,255,0.5);
         }
-        .project-card:hover .project-visit-hint { opacity: 1; transform: translate(0,0); }
+        .project-card:hover .project-visit-hint {
+            color: #fff; background: rgba(0,210,255,0.18);
+            border-color: rgba(0,210,255,0.5);
+            box-shadow: 0 6px 20px rgba(0,210,255,0.18);
+            transform: translateY(-1px);
+        }
 
         /* ── Project Body ── */
         .project-body { padding: 22px 24px 26px; }
@@ -460,45 +510,66 @@
             display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 36px;
         }
 
-        /* ── Socials ── */
-        .socials-grid {
-            display: grid; grid-template-columns: repeat(2,1fr); gap: 12px;
-            margin-top: 64px; max-width: 600px; margin-left: auto; margin-right: auto; text-align: left;
+        /* ── Socials — Apple-style (clean, minimal, refined) ── */
+        .socials-apple {
+            margin-top: 72px;
+            display: flex; flex-direction: column;
+            align-items: center; gap: 22px;
         }
-        .social-card {
-            position: relative; padding: 18px 20px; border-radius: 16px;
-            border: 0.5px solid var(--border); background: rgba(14,14,20,0.55);
-            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-            display: flex; align-items: center; gap: 14px; overflow: hidden;
-            transition: transform 0.35s var(--ease), border-color 0.35s, box-shadow 0.35s; cursor: pointer;
+        .socials-caption {
+            font-size: 0.7rem; letter-spacing: 0.18em; text-transform: uppercase;
+            color: rgba(255,255,255,0.42); font-weight: 500;
         }
-        .social-card::before {
-            content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 2.5px;
-            background: var(--sc, var(--accent-cyan)); border-radius: 0 2px 2px 0;
-            opacity: 0; transition: opacity 0.35s var(--ease);
+        .socials-row {
+            display: flex; gap: 14px; align-items: center; justify-content: center;
+            flex-wrap: wrap;
         }
-        .social-card:hover::before { opacity: 1; }
-        .social-card:hover {
-            transform: translateY(-3px) translateX(2px);
-            border-color: rgba(94,92,230,0.4);
-            box-shadow: 0 10px 28px rgba(0,0,0,0.45);
+        .social-pill {
+            position: relative;
+            width: 56px; height: 56px;
+            border-radius: 50%;
+            display: inline-flex; align-items: center; justify-content: center;
+            color: rgba(255,255,255,0.85);
+            border: 0.5px solid rgba(255,255,255,0.09);
+            background: rgba(255,255,255,0.025);
+            backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+            transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+                        border-color 0.4s ease, background 0.4s ease,
+                        color 0.4s ease, box-shadow 0.5s ease;
         }
-        .social-icon-wrapper {
-            width: 40px; height: 40px; border-radius: 10px;
-            background: rgba(255,255,255,0.04); border: 0.5px solid var(--border);
-            display: flex; align-items: center; justify-content: center;
-            color: var(--muted); flex-shrink: 0; transition: background 0.3s, color 0.3s, border-color 0.3s;
+        .social-pill svg {
+            position: relative; z-index: 2;
+            transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
         }
-        .social-card:hover .social-icon-wrapper {
-            background: rgba(94,92,230,0.18);
-            color: var(--sc, var(--accent-cyan));
-            border-color: rgba(94,92,230,0.3);
+        .social-pill:hover {
+            transform: translateY(-4px);
+            color: var(--brand, #fff);
+            border-color: color-mix(in srgb, var(--brand, #fff) 45%, transparent);
+            background: color-mix(in srgb, var(--brand, #fff) 8%, rgba(255,255,255,0.03));
+            box-shadow: 0 10px 30px color-mix(in srgb, var(--brand, #5e5ce6) 28%, transparent);
         }
-        .social-info { flex: 1; min-width: 0; }
-        .social-info h4 { font-size: 0.9rem; font-weight: 600; margin-bottom: 2px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .social-info p { font-size: 0.74rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .social-arrow { font-size: 0.8rem; color: var(--muted); flex-shrink: 0; transition: transform 0.3s, color 0.3s; }
-        .social-card:hover .social-arrow { transform: translate(3px,-3px); color: var(--sc, var(--accent-cyan)); }
+        .social-pill:hover svg { transform: scale(1.08); }
+        .social-pill:active { transform: translateY(-2px) scale(0.97); }
+        .social-tooltip {
+            position: absolute; top: calc(100% + 12px); left: 50%;
+            transform: translateX(-50%) translateY(-4px);
+            font-size: 0.7rem; font-weight: 500; letter-spacing: 0.02em;
+            color: rgba(255,255,255,0.78); white-space: nowrap;
+            padding: 5px 10px; border-radius: 980px;
+            background: rgba(20,20,26,0.92); backdrop-filter: blur(16px);
+            border: 0.5px solid rgba(255,255,255,0.08);
+            opacity: 0;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            pointer-events: none;
+        }
+        .social-pill:hover .social-tooltip {
+            opacity: 1; transform: translateX(-50%) translateY(0);
+        }
+        .socials-divider {
+            width: 1px; height: 24px;
+            background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.12), transparent);
+            margin: 0 4px;
+        }
 
         /* ── Footer ── */
         .site-footer {
@@ -581,10 +652,10 @@
             .project-card.featured { grid-column: span 1; }
             .skills-grid { grid-template-columns: 1fr; }
             .about-grid { grid-template-columns: 1fr; gap: 32px; }
-            /* No hover previews on mobile nav menu open */
+            /* Auf Mobile: kein iframe-Overlay (Performance), aber Live-Badge & Visit-Pill bleiben sichtbar */
             .preview-wrap { display: none; }
-            .preview-live-badge { display: none; }
-            .project-visit-hint { display: none; }
+            .preview-live-badge { top: 38px; right: 10px; font-size: 0.52rem; padding: 4px 8px; }
+            .project-visit-hint { bottom: 10px; right: 10px; font-size: 0.62rem; padding: 4px 8px; }
         }
 
         @media (max-width: 768px) {
@@ -605,7 +676,8 @@
             .ambient-glow, .ambient-glow-2, .ambient-glow-3, .cursor-glow { display: none !important; pointer-events: none; }
             .contact h2 { font-size: clamp(2.4rem,12vw,4rem); }
             .quote-section { min-height: 60vh; padding-left: 24px; padding-right: 24px; }
-            .socials-grid { grid-template-columns: 1fr; max-width: 440px; margin-top: 48px; }
+            .socials-apple { margin-top: 56px; gap: 18px; }
+            .social-pill { width: 50px; height: 50px; }
         }
 
         @media (max-width: 500px) {
@@ -744,30 +816,31 @@
                 <h2>Projekt<br>im Kopf?</h2>
                 <p class="lead">Erzähl mir von deiner Idee — ich mache daraus etwas, woran sich Leute nicht sattsehen können.</p>
                 <div class="contact-actions">
-                    <a href="mailto:hello@floriders.com" class="btn btn-apple-blue">E-Mail schreiben →</a>
+                    <a href="/cdn-cgi/l/email-protection#86eee3eaeae9c6e0eae9f4efe2e3f4f5a8e5e9eb" class="btn btn-apple-blue">E-Mail schreiben →</a>
                     <a href="#work" class="btn btn-ghost">Nochmal staunen</a>
                 </div>
-                <div class="socials-grid">
-                    <a href="https://instagram.com/flo.frx" target="_blank" rel="noopener" class="social-card" style="--sc: #e1306c">
-                        <div class="social-icon-wrapper"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg></div>
-                        <div class="social-info"><h4>Instagram</h4><p>@flo.frx</p></div>
-                        <span class="social-arrow">↗</span>
-                    </a>
-                    <a href="mailto:florider8@hotmail.com" class="social-card" style="--sc: #00d2ff">
-                        <div class="social-icon-wrapper"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg></div>
-                        <div class="social-info"><h4>E-Mail</h4><p>florider8@hotmail.com</p></div>
-                        <span class="social-arrow">↗</span>
-                    </a>
-                    <a href="https://snapchat.com/add/flo.frx" target="_blank" rel="noopener" class="social-card" style="--sc: #FFFC00">
-                        <div class="social-icon-wrapper"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2c2.4 0 4.3 2.1 4.3 4.8 0 1-.4 2-.8 2.8 1.1 1.4 3 2.8 3 4.4 0 .9-.5 1.5-1.2 1.8-.7.3-1.6.2-2.1-.2-.5-.4-.7-.9-.7-1.4 0-.8.4-1.5.8-2-.8-.4-1.9-.7-3.3-.7s-2.5.3-3.3.7c.4.5.8 1.2.8 2 0 .5-.2 1-.7 1.4-.5.4-1.4.5-2.1.2-.7-.3-1.2-.9-1.2-1.8 0-1.6 1.9-3 3-4.4-.4-.8-.8-1.8-.8-2.8C7.7 4.1 9.6 2 12 2z"></path></svg></div>
-                        <div class="social-info"><h4>Snapchat</h4><p>flo.frx</p></div>
-                        <span class="social-arrow">↗</span>
-                    </a>
-                    <a href="https://wa.me/436600000000" target="_blank" rel="noopener" class="social-card" style="--sc: #25d366">
-                        <div class="social-icon-wrapper"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg></div>
-                        <div class="social-info"><h4>WhatsApp</h4><p>Nachricht schreiben</p></div>
-                        <span class="social-arrow">↗</span>
-                    </a>
+                <div class="socials-apple">
+                    <p class="socials-caption">Oder folge mir</p>
+                    <div class="socials-row">
+                        <a href="https://instagram.com/flo.frx" target="_blank" rel="noopener" class="social-pill" style="--brand: #e1306c" aria-label="Instagram">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+                            <span class="social-tooltip">@flo.frx</span>
+                        </a>
+                        <a href="/cdn-cgi/l/email-protection#d3b5bfbca1bab7b6a1eb93bbbca7beb2babffdb0bcbe" class="social-pill" style="--brand: #00d2ff" aria-label="E-Mail">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                            <span class="social-tooltip"><span class="__cf_email__" data-cfemail="f593999a879c919087cdb59d9a8198949c99db969a98">[email&#160;protected]</span></span>
+                        </a>
+                        <a href="https://snapchat.com/add/flo.frx" target="_blank" rel="noopener" class="social-pill" style="--brand: #FFFC00" aria-label="Snapchat">
+   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M16.172 11h3c.895 0 1.258 1.488 .43 2.125c-1.325 1.018 -3.535 2.502 -6.102 3.875v1c0 1.657 1.343 3 3 3h1.5c1.196 0 2.277 -.482 3.064 -1.261l.436 .412c.594 .561 .01 1.849 -1.047 1.849h-16.91c-1.056 0 -1.64 -1.288 -1.047 -1.849l.436 -.412c.787 -.779 1.868 -1.261 3.064 -1.261h1.5v-1c-2.567 -1.373 -4.777 -2.857 -6.102 -3.875c-.828 -.637 -.465 -2.125 .43 -2.125h3a6 6 0 0 1 12 0z"></path>
+    </svg>
+    <span class="social-tooltip">flo.frx</span>
+</a>
+                        <a href="https://wa.me/436600000000" target="_blank" rel="noopener" class="social-pill" style="--brand: #25d366" aria-label="WhatsApp">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                            <span class="social-tooltip">WhatsApp</span>
+                        </a>
+                    </div>
                 </div>
             </div>
         </section>
@@ -779,7 +852,7 @@
         <p>Crafted with precision</p>
     </footer>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.20/dist/lenis.min.js"></script>
@@ -835,6 +908,21 @@
        END OF PROJECT CONFIGURATION
     ═══════════════════════════════════════════════════════════════════ */
 
+    /* ── Helpers ── */
+    function getHostname(url) {
+        try { return new URL(url).hostname.replace(/^www\./, ''); }
+        catch { return url; }
+    }
+    /* thum.io free screenshot service — kein API-Key nötig.
+       Fallback: Microlink, sonst Skeleton bleibt sichtbar. */
+    function getScreenshotUrl(url) {
+        const clean = encodeURIComponent(url);
+        return `https://image.thum.io/get/width/1280/crop/800/noanimate/${url}`;
+    }
+    function getScreenshotFallbackUrl(url) {
+        return `https://api.microlink.io/?url=${encodeURIComponent(url)}&screenshot=true&meta=false&embed=screenshot.url&viewport.width=1280&viewport.height=800`;
+    }
+
     /* ── Render projects from config ── */
     function renderProjects() {
         const grid = document.getElementById('work-grid');
@@ -850,23 +938,45 @@
                 .map(t => `<span class="tag">${t}</span>`)
                 .join('');
 
+            const host = project.url ? getHostname(project.url) : '';
+
             article.innerHTML = `
-                <div class="project-visual" style="--card-gradient: ${project.gradient}">
-                    <div class="project-visual-bg"></div>
+                <div class="project-visual">
+                    <!-- macOS browser chrome — makes it instantly recognizable as a website -->
+                    <div class="browser-chrome" aria-hidden="true">
+                        <div class="browser-dots">
+                            <span class="browser-dot"></span>
+                            <span class="browser-dot"></span>
+                            <span class="browser-dot"></span>
+                        </div>
+                        <div class="browser-url-bar">
+                            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                            <span class="browser-url-text">${host}</span>
+                        </div>
+                    </div>
+
+                    <!-- Skeleton fallback (animated, behind screenshot) -->
+                    <div class="preview-skeleton" aria-hidden="true"></div>
+
+                    <!-- Static screenshot — always visible once loaded -->
+                    <div class="preview-screenshot" aria-hidden="true"></div>
+
+                    <!-- Project number -->
                     <span class="project-num">${project.num}</span>
 
+                    <!-- Iframe overlay — fades in on hover (true live website) -->
                     <div class="preview-wrap" aria-hidden="true">
-                        <div class="preview-shimmer">
-                            <div class="shimmer-bar"></div>
-                        </div>
                         <iframe tabindex="-1" scrolling="no" loading="lazy"></iframe>
-                        <div class="preview-gradient-overlay"></div>
                     </div>
+                    <div class="preview-gradient-overlay"></div>
 
+                    <!-- Live indicator — always visible -->
                     <div class="preview-live-badge">
                         <span class="live-dot"></span>
-                        Live Preview
+                        Live Website
                     </div>
+
+                    <!-- Visit pill — always visible -->
                     <span class="project-visit-hint">Besuchen ↗</span>
                 </div>
                 <div class="project-body">
@@ -881,7 +991,7 @@
         setupProjectCards();
     }
 
-    /* ── Wire up hover previews and click navigation ── */
+    /* ── Wire up screenshots, hover live-iframe, and click navigation ── */
     function setupProjectCards() {
         const isTouchDevice = window.matchMedia('(hover: none)').matches;
 
@@ -889,9 +999,30 @@
             const url         = card.dataset.url;
             const previewWrap = card.querySelector('.preview-wrap');
             const iframe      = card.querySelector('iframe');
-            const shimmer     = card.querySelector('.preview-shimmer');
+            const screenshot  = card.querySelector('.preview-screenshot');
 
-            let iframeSrcSet  = false;
+            /* Lade Screenshot sofort als Background-Image (mit Fallback) */
+            if (screenshot && url) {
+                const img = new Image();
+                img.referrerPolicy = 'no-referrer';
+                img.onload = () => {
+                    screenshot.style.backgroundImage = `url("${img.src}")`;
+                    screenshot.classList.add('loaded');
+                };
+                img.onerror = () => {
+                    /* Fallback auf Microlink */
+                    const fb = new Image();
+                    fb.referrerPolicy = 'no-referrer';
+                    fb.onload = () => {
+                        screenshot.style.backgroundImage = `url("${fb.src}")`;
+                        screenshot.classList.add('loaded');
+                    };
+                    fb.src = getScreenshotFallbackUrl(url);
+                };
+                img.src = getScreenshotUrl(url);
+            }
+
+            let iframeSrcSet = false;
 
             /* Click → open project URL in new tab */
             card.addEventListener('click', () => {
@@ -902,31 +1033,22 @@
             if (isTouchDevice || !previewWrap) return;
 
             card.addEventListener('mouseenter', () => {
-                /* Lazy-load iframe on first hover to avoid upfront network cost */
+                /* Lazy-load iframe on first hover */
                 if (!iframeSrcSet) {
                     iframeSrcSet = true;
                     iframe.src = url;
-
-                    iframe.addEventListener('load', () => {
-                        shimmer.classList.add('loaded');
-                    }, { once: true });
-
-                    /* Fallback: hide shimmer after 4 s in case iframe is blocked */
-                    setTimeout(() => shimmer.classList.add('loaded'), 4000);
                 }
 
                 gsap.killTweensOf(previewWrap);
-                gsap.fromTo(previewWrap,
-                    { opacity: 0, y: 10, scale: 1.015 },
-                    { opacity: 1, y: 0, scale: 1, duration: 0.52, ease: 'power3.out' }
-                );
+                gsap.to(previewWrap, {
+                    opacity: 1, duration: 0.55, ease: 'power2.out'
+                });
             });
 
             card.addEventListener('mouseleave', () => {
                 gsap.killTweensOf(previewWrap);
                 gsap.to(previewWrap, {
-                    opacity: 0, y: 7,
-                    duration: 0.38, ease: 'power3.in'
+                    opacity: 0, duration: 0.4, ease: 'power2.in'
                 });
             });
         });
@@ -1310,5 +1432,6 @@
         setInterval(updateTime, 1000);
     })();
     </script>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v833ccba57c9e4d2798f2e76cebdd09a11778172276447" integrity="sha512-57MDmcccJXYtNnH+ZiBwzC4jb2rvgVCEokYN+L/nLlmO8rfYT/gIpW2A569iJ/3b+0UEasghjuZH/ma3wIs/EQ==" data-cf-beacon='{"version":"2024.11.0","token":"7f7b0fd8732c4326aae4b9d58d5c514a","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
 </body>
 </html>
