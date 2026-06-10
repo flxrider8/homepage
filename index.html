@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -31,6 +30,7 @@
         }
 
         html { scroll-behavior: auto; }
+        html.is-loading, html.is-loading body { overflow: hidden !important; height: 100%; overscroll-behavior: none; }
 
         body {
             background: var(--bg);
@@ -85,11 +85,76 @@
         .loader {
             position: fixed; inset: 0; background: #030305; z-index: 10000;
             display: flex; flex-direction: column; justify-content: center; align-items: center;
+            overflow: hidden;
         }
+        .loader-particles { position: absolute; inset: 0; pointer-events: none; }
+        .loader-particles span {
+            position: absolute; bottom: -10px; border-radius: 50%;
+            background: var(--accent-cyan); opacity: 0;
+            animation-name: loaderParticleFloat; animation-timing-function: ease-in-out;
+            animation-iteration-count: infinite;
+        }
+        @keyframes loaderParticleFloat {
+            0%   { opacity: 0; transform: translateY(0) scale(0.6); }
+            12%  { opacity: 0.9; }
+            85%  { opacity: 0.5; }
+            100% { opacity: 0; transform: translateY(-90vh) scale(1.3); }
+        }
+
+        .loader-core {
+            position: relative; width: clamp(150px,32vw,210px); height: clamp(150px,32vw,210px);
+            display: flex; align-items: center; justify-content: center; margin-bottom: 38px;
+        }
+        .loader-core-glow {
+            position: absolute; inset: 8%; border-radius: 50%;
+            background: radial-gradient(circle, var(--accent-glow) 0%, transparent 72%);
+            filter: blur(22px); animation: loaderGlowPulse 2.4s ease-in-out infinite;
+        }
+        @keyframes loaderGlowPulse {
+            0%, 100% { opacity: 0.45; transform: scale(0.9); }
+            50% { opacity: 1; transform: scale(1.15); }
+        }
+        .loader-ring { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); filter: drop-shadow(0 0 14px rgba(0,210,255,0.45)); }
+        .loader-ring-track { fill: none; stroke: rgba(255,255,255,0.06); stroke-width: 2; }
+        .loader-ring-progress {
+            fill: none; stroke: url(#loaderGrad); stroke-width: 2.5; stroke-linecap: round;
+            stroke-dasharray: 553; stroke-dashoffset: 553;
+        }
+        .loader-orbit-dot {
+            position: absolute; inset: 0; animation: loaderOrbitSpin 2.6s linear infinite;
+        }
+        .loader-orbit-dot::after {
+            content: ''; position: absolute; top: -2px; left: 50%; width: 7px; height: 7px;
+            margin-left: -3.5px; border-radius: 50%;
+            background: var(--accent-cyan); box-shadow: 0 0 10px var(--accent-cyan), 0 0 22px var(--accent-cyan);
+        }
+        .loader-orbit-dot-2 {
+            animation-duration: 4s; animation-direction: reverse;
+        }
+        .loader-orbit-dot-2::after {
+            top: 6%; width: 5px; height: 5px; margin-left: -2.5px;
+            background: var(--accent); box-shadow: 0 0 10px var(--accent), 0 0 18px var(--accent);
+            opacity: 0.75;
+        }
+        @keyframes loaderOrbitSpin { 100% { transform: rotate(360deg); } }
+
         .loader-counter {
-            font-size: clamp(3rem,8vw,5rem); font-weight: 300; letter-spacing: -0.04em;
-            color: var(--text); margin-bottom: 30px; font-variant-numeric: tabular-nums;
+            font-size: clamp(2.6rem,7vw,4.2rem); font-weight: 300; letter-spacing: -0.04em;
+            color: var(--text); font-variant-numeric: tabular-nums;
         }
+
+        .loader-word {
+            display: flex; gap: 0.32em; margin-bottom: 30px;
+            font-size: clamp(0.78rem,1.6vw,0.95rem); font-weight: 600;
+            letter-spacing: 0.5em; text-transform: uppercase; padding-left: 0.5em;
+        }
+        .loader-word span {
+            display: inline-block; opacity: 0; filter: blur(6px);
+            transform: translateY(14px) scale(0.85);
+            background: linear-gradient(160deg, #ffffff 35%, var(--accent-cyan) 100%);
+            -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+        }
+
         .loader-bar-wrap {
             width: clamp(150px,20vw,250px); height: 2px;
             background: rgba(255,255,255,0.05); overflow: hidden; border-radius: 2px;
@@ -98,6 +163,16 @@
             width: 0%; height: 100%;
             background: linear-gradient(90deg, var(--accent-cyan), var(--accent));
             box-shadow: 0 0 15px rgba(0,210,255,0.5);
+        }
+
+        .loader-flash {
+            position: fixed; inset: 0; z-index: 10001; pointer-events: none; opacity: 0;
+            background: radial-gradient(circle, rgba(255,255,255,0.95) 0%, rgba(0,210,255,0.45) 35%, transparent 72%);
+            mix-blend-mode: screen;
+        }
+
+        @media (max-width: 500px) {
+            .loader-word { letter-spacing: 0.32em; }
         }
 
         #saturn-canvas {
@@ -323,13 +398,16 @@
             backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
             border-bottom: 0.5px solid rgba(255,255,255,0.06);
         }
-        .browser-dots { display: flex; gap: 6px; flex-shrink: 0; }
-        .browser-dot { width: 10px; height: 10px; border-radius: 50%; }
-        .browser-dot:nth-child(1) { background: #ff5f57; }
-        .browser-dot:nth-child(2) { background: #febc2e; }
-        .browser-dot:nth-child(3) { background: #28c840; }
+        .browser-dots { display: flex; gap: 4px; flex-shrink: 0; align-items: center; order: 2; }
+        .browser-dot {
+            width: 26px; height: 22px; border-radius: 3px;
+            display: flex; align-items: center; justify-content: center;
+            color: rgba(255,255,255,0.55);
+        }
+        .browser-dot:nth-child(3) { border-radius: 3px 6px 4px 3px; }
+        .browser-dot:nth-child(3):hover, .project-card:hover .browser-dot:nth-child(3) { background: #e81123; color: #fff; }
         .browser-url-bar {
-            flex: 1; height: 18px;
+            flex: 1; height: 18px; order: 1;
             background: rgba(255,255,255,0.06);
             border-radius: 5px;
             display: flex; align-items: center; gap: 6px;
@@ -338,7 +416,7 @@
             font-family: ui-monospace, "SF Mono", Menlo, monospace;
             overflow: hidden; white-space: nowrap;
             border: 0.5px solid rgba(255,255,255,0.04);
-            max-width: 78%;
+            max-width: none;
         }
         .browser-url-bar svg { flex-shrink: 0; opacity: 0.7; }
         .browser-url-text { overflow: hidden; text-overflow: ellipsis; }
@@ -550,6 +628,51 @@
         }
         .social-pill:hover svg { transform: scale(1.08); }
         .social-pill:active { transform: translateY(-2px) scale(0.97); }
+
+        /* ── Email CTA — long animated bar above the socials ── */
+        .email-cta {
+            position: relative;
+            display: inline-flex; align-items: center; justify-content: center;
+            margin-top: 40px;
+            padding: 4px;
+            border-radius: 980px;
+            min-width: clamp(280px, 42vw, 420px);
+            transition: transform 0.4s var(--ease);
+        }
+        .email-cta-ring {
+            position: absolute; inset: 0; border-radius: 980px;
+            background: linear-gradient(120deg, var(--accent-cyan) 0%, var(--accent) 30%, rgba(255,255,255,0.04) 50%, var(--accent) 70%, var(--accent-cyan) 100%);
+            background-size: 300% 300%;
+            animation: emailBorderFlow 5s ease-in-out infinite;
+            z-index: 0;
+        }
+        @keyframes emailBorderFlow {
+            0%   { background-position: 0% 50%; }
+            50%  { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .email-cta-glow {
+            position: absolute; inset: -18px; border-radius: 980px;
+            background: radial-gradient(ellipse, rgba(0,210,255,0.32) 0%, transparent 70%);
+            filter: blur(20px); opacity: 0.5; z-index: -1;
+            animation: emailGlowPulse 2.6s ease-in-out infinite;
+        }
+        .email-cta-inner {
+            position: relative; z-index: 1; width: 100%;
+            display: inline-flex; align-items: center; justify-content: center; gap: 12px;
+            padding: 16px 38px; border-radius: 980px;
+            background: rgba(8,9,14,0.92); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            color: #fff; font-size: 0.95rem; font-weight: 600; letter-spacing: 0.01em;
+        }
+        .email-cta-inner svg:last-child { transition: transform 0.4s var(--ease); }
+        @keyframes emailGlowPulse {
+            0%, 100% { opacity: 0.35; transform: scale(0.95); }
+            50% { opacity: 0.8; transform: scale(1.08); }
+        }
+        .email-cta:hover { transform: translateY(-3px) scale(1.015); }
+        .email-cta:hover .email-cta-ring { animation-duration: 1.8s; }
+        .email-cta:hover .email-cta-inner svg:last-child { transform: translateX(4px); }
+        .email-cta:active { transform: translateY(-1px) scale(0.99); }
         .social-tooltip {
             position: absolute; top: calc(100% + 12px); left: 50%;
             transform: translateX(-50%) translateY(-4px);
@@ -656,6 +779,15 @@
             .preview-wrap { display: none; }
             .preview-live-badge { top: 38px; right: 10px; font-size: 0.52rem; padding: 4px 8px; }
             .project-visit-hint { bottom: 10px; right: 10px; font-size: 0.62rem; padding: 4px 8px; }
+
+            /* Performance: schwächeres Blur & weniger Repaints beim Scrollen */
+            .project-card {
+                backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+                contain: layout paint style; transform: translateZ(0);
+            }
+            .browser-chrome, .preview-live-badge, .project-visit-hint, .project-num, .tag {
+                backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+            }
         }
 
         @media (max-width: 768px) {
@@ -678,6 +810,8 @@
             .quote-section { min-height: 60vh; padding-left: 24px; padding-right: 24px; }
             .socials-apple { margin-top: 56px; gap: 18px; }
             .social-pill { width: 50px; height: 50px; }
+            .email-cta { width: 100%; min-width: 0; }
+            .email-cta-inner { padding: 16px 24px; font-size: 0.9rem; }
         }
 
         @media (max-width: 500px) {
@@ -703,10 +837,30 @@
     <div class="ambient-glow-2"></div>
     <div class="cursor-glow" id="cursorGlow"></div>
 
-    <div class="loader">
-        <div class="loader-counter" id="loaderCounter">0%</div>
+    <div class="loader" id="loader">
+        <div class="loader-particles" id="loaderParticles"></div>
+        <div class="loader-core">
+            <div class="loader-core-glow"></div>
+            <svg class="loader-ring" viewBox="0 0 200 200">
+                <defs>
+                    <linearGradient id="loaderGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#00d2ff"/>
+                        <stop offset="100%" stop-color="#5e5ce6"/>
+                    </linearGradient>
+                </defs>
+                <circle class="loader-ring-track" cx="100" cy="100" r="88"></circle>
+                <circle class="loader-ring-progress" id="loaderRing" cx="100" cy="100" r="88"></circle>
+            </svg>
+            <div class="loader-orbit-dot"></div>
+            <div class="loader-orbit-dot loader-orbit-dot-2"></div>
+            <div class="loader-counter" id="loaderCounter">0%</div>
+        </div>
+        <div class="loader-word" id="loaderWord">
+            <span>F</span><span>L</span><span>O</span><span>R</span><span>I</span><span>D</span><span>E</span><span>R</span><span>S</span>
+        </div>
         <div class="loader-bar-wrap"><div class="loader-bar" id="loaderBar"></div></div>
     </div>
+    <div class="loader-flash" id="loaderFlash"></div>
 
     <nav>
         <a id="logoLink" class="logo">
@@ -816,9 +970,19 @@
                 <h2>Projekt<br>im Kopf?</h2>
                 <p class="lead">Erzähl mir von deiner Idee — ich mache daraus etwas, woran sich Leute nicht sattsehen können.</p>
                 <div class="contact-actions">
-                    <a href="/cdn-cgi/l/email-protection#86eee3eaeae9c6e0eae9f4efe2e3f4f5a8e5e9eb" class="btn btn-apple-blue">E-Mail schreiben →</a>
                     <a href="#work" class="btn btn-ghost">Nochmal staunen</a>
                 </div>
+
+                <a href="/cdn-cgi/l/email-protection#86eee3eaeae9c6e0eae9f4efe2e3f4f5a8e5e9eb" class="email-cta" aria-label="E-Mail schreiben">
+                    <span class="email-cta-glow" aria-hidden="true"></span>
+                    <span class="email-cta-ring" aria-hidden="true"></span>
+                    <span class="email-cta-inner">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                        <span>E-Mail schreiben</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </span>
+                </a>
+
                 <div class="socials-apple">
                     <p class="socials-caption">Oder folge mir</p>
                     <div class="socials-row">
@@ -826,18 +990,18 @@
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
                             <span class="social-tooltip">@flo.frx</span>
                         </a>
-                        <a href="/cdn-cgi/l/email-protection#d3b5bfbca1bab7b6a1eb93bbbca7beb2babffdb0bcbe" class="social-pill" style="--brand: #00d2ff" aria-label="E-Mail">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
-                            <span class="social-tooltip"><span class="__cf_email__" data-cfemail="f593999a879c919087cdb59d9a8198949c99db969a98">[email&#160;protected]</span></span>
-                        </a>
                         <a href="https://snapchat.com/add/flo.frx" target="_blank" rel="noopener" class="social-pill" style="--brand: #FFFC00" aria-label="Snapchat">
-   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M16.172 11h3c.895 0 1.258 1.488 .43 2.125c-1.325 1.018 -3.535 2.502 -6.102 3.875v1c0 1.657 1.343 3 3 3h1.5c1.196 0 2.277 -.482 3.064 -1.261l.436 .412c.594 .561 .01 1.849 -1.047 1.849h-16.91c-1.056 0 -1.64 -1.288 -1.047 -1.849l.436 -.412c.787 -.779 1.868 -1.261 3.064 -1.261h1.5v-1c-2.567 -1.373 -4.777 -2.857 -6.102 -3.875c-.828 -.637 -.465 -2.125 .43 -2.125h3a6 6 0 0 1 12 0z"></path>
-    </svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 3c3.3 0 6 2.6 6 6v4.5l1.6 2.4c.4.6 0 1.4-.7 1.4h-2.4c-.2 1.6-1.6 2.7-3.2 2.7h-2.6c-1.6 0-3-1.1-3.2-2.7H5.1c-.7 0-1.1-.8-.7-1.4L6 13.5V9c0-3.4 2.7-6 6-6z"></path>
+    <path d="M9 11c.3.4.8.7 1.3.7s1-.3 1.3-.7M12.4 11c.3.4.8.7 1.3.7s1-.3 1.3-.7"></path>
+</svg>
     <span class="social-tooltip">flo.frx</span>
 </a>
                         <a href="https://wa.me/436600000000" target="_blank" rel="noopener" class="social-pill" style="--brand: #25d366" aria-label="WhatsApp">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M3 12c0-4.418 4.03-8 9-8s9 3.582 9 8-4.03 8-9 8c-1.155 0-2.257-.193-3.268-.545L4 21l1.395-3.872C3.89 15.79 3 13.99 3 12z"></path>
+    <path d="M8.5 11.5h.01M12 11.5h.01M15.5 11.5h.01"></path>
+</svg>
                             <span class="social-tooltip">WhatsApp</span>
                         </a>
                     </div>
@@ -942,16 +1106,16 @@
 
             article.innerHTML = `
                 <div class="project-visual">
-                    <!-- macOS browser chrome — makes it instantly recognizable as a website -->
+                    <!-- Windows-style browser chrome — makes it instantly recognizable as a website -->
                     <div class="browser-chrome" aria-hidden="true">
-                        <div class="browser-dots">
-                            <span class="browser-dot"></span>
-                            <span class="browser-dot"></span>
-                            <span class="browser-dot"></span>
-                        </div>
                         <div class="browser-url-bar">
                             <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
                             <span class="browser-url-text">${host}</span>
+                        </div>
+                        <div class="browser-dots">
+                            <span class="browser-dot" title="Minimieren"><svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1"><line x1="1.5" y1="8" x2="8.5" y2="8"></line></svg></span>
+                            <span class="browser-dot" title="Maximieren"><svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1"><rect x="1.5" y="1.5" width="7" height="7"></rect></svg></span>
+                            <span class="browser-dot" title="Schließen"><svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1"><line x1="1.5" y1="1.5" x2="8.5" y2="8.5"></line><line x1="8.5" y1="1.5" x2="1.5" y2="8.5"></line></svg></span>
                         </div>
                     </div>
 
@@ -1003,11 +1167,13 @@
 
             /* Lade Screenshot sofort als Background-Image (mit Fallback) */
             if (screenshot && url) {
+                const skeleton = card.querySelector('.preview-skeleton');
                 const img = new Image();
                 img.referrerPolicy = 'no-referrer';
                 img.onload = () => {
                     screenshot.style.backgroundImage = `url("${img.src}")`;
                     screenshot.classList.add('loaded');
+                    if (skeleton) skeleton.style.display = 'none';
                 };
                 img.onerror = () => {
                     /* Fallback auf Microlink */
@@ -1016,6 +1182,7 @@
                     fb.onload = () => {
                         screenshot.style.backgroundImage = `url("${fb.src}")`;
                         screenshot.classList.add('loaded');
+                        if (skeleton) skeleton.style.display = 'none';
                     };
                     fb.src = getScreenshotFallbackUrl(url);
                 };
@@ -1066,6 +1233,10 @@
         gsap.ticker.add((time) => lenis.raf(time * 1000));
         gsap.ticker.lagSmoothing(0);
 
+        /* Lock scrolling while the loader is visible */
+        lenis.stop();
+        document.documentElement.classList.add('is-loading');
+
         /* Mobile menu */
         const navLinks = document.getElementById('navLinks');
         const navToggle = document.getElementById('navToggle');
@@ -1076,6 +1247,13 @@
                 navLinks.classList.add('open');
                 navToggle.classList.add('open');
                 lenis.stop();
+                const scrollY = window.scrollY || window.pageYOffset;
+                document.body.dataset.scrollY = scrollY;
+                document.body.style.position = 'fixed';
+                document.body.style.top = `-${scrollY}px`;
+                document.body.style.left = '0';
+                document.body.style.right = '0';
+                document.body.style.width = '100%';
                 gsap.killTweensOf([navLinks, '.nav-links li']);
                 gsap.set(navLinks, { visibility: 'visible', pointerEvents: 'all' });
                 gsap.fromTo(navLinks, { opacity: 0 }, { opacity: 1, duration: 0.5, ease: 'power2.out' });
@@ -1084,6 +1262,13 @@
             } else {
                 navLinks.classList.remove('open');
                 navToggle.classList.remove('open');
+                const scrollY = parseInt(document.body.dataset.scrollY || '0', 10);
+                document.body.style.position = '';
+                document.body.style.top = '';
+                document.body.style.left = '';
+                document.body.style.right = '';
+                document.body.style.width = '';
+                window.scrollTo(0, scrollY);
                 lenis.start();
                 gsap.killTweensOf([navLinks, '.nav-links li']);
                 gsap.to('.nav-links li', { y: -20, opacity: 0, duration: 0.3, stagger: 0.04, ease: 'power2.in' });
@@ -1097,25 +1282,37 @@
         document.querySelectorAll('a[href^="#"]').forEach(link => {
             link.addEventListener('click', (e) => {
                 const id = link.getAttribute('href');
+                const wasOpen = navLinks.classList.contains('open');
                 if (id === '#') {
                     e.preventDefault();
-                    if (navLinks.classList.contains('open')) toggleMobileMenu();
-                    lenis.scrollTo(0, { duration: 1.4 });
+                    if (wasOpen) toggleMobileMenu();
                     if (window.location.hash) history.replaceState(null, null, ' ');
+                    requestAnimationFrame(() => requestAnimationFrame(() => {
+                        lenis.resize();
+                        lenis.scrollTo(0, { duration: 1.4 });
+                    }));
                     return;
                 }
                 e.preventDefault();
-                if (navLinks.classList.contains('open')) toggleMobileMenu();
                 const target = document.querySelector(id);
-                if (target) lenis.scrollTo(target, { offset: -80, duration: 1.4 });
+                if (wasOpen) toggleMobileMenu();
+                if (!target) return;
+                requestAnimationFrame(() => requestAnimationFrame(() => {
+                    lenis.resize();
+                    lenis.scrollTo(target, { offset: -80, duration: 1.4 });
+                }));
             });
         });
 
         document.getElementById('logoLink').addEventListener('click', (e) => {
             e.preventDefault();
-            if (navLinks.classList.contains('open')) toggleMobileMenu();
-            lenis.scrollTo(0, { duration: 1.4 });
+            const wasOpen = navLinks.classList.contains('open');
+            if (wasOpen) toggleMobileMenu();
             if (window.location.hash) history.replaceState(null, null, ' ');
+            requestAnimationFrame(() => requestAnimationFrame(() => {
+                lenis.resize();
+                lenis.scrollTo(0, { duration: 1.4 });
+            }));
         });
 
         ScrollTrigger.create({
@@ -1141,26 +1338,57 @@
         /* Render project cards */
         renderProjects();
 
+        /* ── Loader particles ── */
+        const particleHost = document.getElementById('loaderParticles');
+        const particleCount = window.innerWidth < 768 ? 18 : 32;
+        for (let i = 0; i < particleCount; i++) {
+            const p = document.createElement('span');
+            const size = (Math.random() * 2.5 + 1).toFixed(1);
+            p.style.left = (Math.random() * 100) + '%';
+            p.style.width = size + 'px';
+            p.style.height = size + 'px';
+            p.style.animationDuration = (Math.random() * 3 + 3.5) + 's';
+            p.style.animationDelay = (Math.random() * 4) + 's';
+            if (Math.random() > 0.6) p.style.background = 'var(--accent)';
+            particleHost.appendChild(p);
+        }
+
+        /* ── Loader: animate wordmark ── */
+        gsap.to('.loader-word span', {
+            opacity: 1, y: 0, scale: 1, filter: 'blur(0px)',
+            duration: 0.7, stagger: 0.07, ease: 'back.out(2)', delay: 0.25
+        });
+
         /* ── Loader ── */
+        const loaderRingCircumference = 2 * Math.PI * 88;
         let loadProgress = { val: 0 };
         gsap.to(loadProgress, {
             val: 100, duration: 2.2, ease: 'power2.inOut',
             onUpdate: () => {
-                document.getElementById('loaderCounter').innerText = Math.floor(loadProgress.val) + '%';
-                document.getElementById('loaderBar').style.width = loadProgress.val + '%';
+                const v = loadProgress.val;
+                document.getElementById('loaderCounter').innerText = Math.floor(v) + '%';
+                document.getElementById('loaderBar').style.width = v + '%';
+                document.getElementById('loaderRing').style.strokeDashoffset = loaderRingCircumference * (1 - v / 100);
             },
             onComplete: () => {
-                const exitTl = gsap.timeline({ onComplete: () => { document.querySelector('.loader').style.display = 'none'; } });
-                exitTl.to(['#loaderCounter', '.loader-bar-wrap'], { opacity: 0, y: -30, duration: 0.6, ease: 'power3.in' });
-                exitTl.to('.loader', { yPercent: -100, duration: 1.4, ease: 'expo.inOut' }, '-=0.2');
-                exitTl.add(() => { startAnimations(); }, '-=1.1');
+                const exitTl = gsap.timeline({ onComplete: () => { document.getElementById('loader').style.display = 'none'; } });
+                exitTl.to('.loader-core', { scale: 1.5, opacity: 0, duration: 0.55, ease: 'power2.in' });
+                exitTl.to('.loader-word, .loader-bar-wrap', { opacity: 0, y: -20, duration: 0.45, ease: 'power2.in' }, '<');
+                exitTl.to('#loaderFlash', { opacity: 1, duration: 0.18, ease: 'power1.in' }, '-=0.2');
+                exitTl.to('#loaderFlash', { opacity: 0, duration: 0.7, ease: 'power2.out' });
+                exitTl.to('.loader', { yPercent: -100, duration: 1.4, ease: 'expo.inOut' }, '-=0.6');
+                exitTl.add(() => {
+                    document.documentElement.classList.remove('is-loading');
+                    lenis.start();
+                    startAnimations();
+                }, '-=1.3');
             }
         });
 
         /* ── THREE.JS SATURN ── */
         const isMobile  = () => window.innerWidth < 768;
         const isTablet  = () => window.innerWidth < 1200;
-        function getDPR() { return Math.min(window.devicePixelRatio, isMobile() ? 1.5 : 2); }
+        function getDPR() { return Math.min(window.devicePixelRatio, isMobile() ? 1 : 2); }
 
         const canvas = document.getElementById('saturn-canvas');
         const scene  = new THREE.Scene();
@@ -1179,7 +1407,7 @@
         }
         applyCameraLayout(true);
 
-        const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true, powerPreference: 'high-performance' });
+        const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: !isMobile(), powerPreference: 'high-performance' });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(getDPR());
         renderer.setClearColor(0x000000, 0);
